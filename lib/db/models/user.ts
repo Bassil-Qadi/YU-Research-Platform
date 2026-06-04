@@ -3,6 +3,14 @@ import { USER_ROLES } from "@/types";
 
 const userSchema = new Schema(
   {
+    researchInterests: [{ type: String }],
+    department:        { type: String },
+    bio:               { type: String, maxlength: 1000 },
+    orcidId:           { type: String },
+    position:          { type: String },  // 'Professor', 'PhD Student', etc.
+    publicationsUrl:   { type: String },
+    avatarUrl:         { type: String },
+    isPublic:          { type: Boolean, default: true },
     universityId: { type: String, required: true, unique: true, index: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     name: { type: String, required: true },
@@ -12,9 +20,6 @@ const userSchema = new Schema(
       default: "Student",
       required: true,
     },
-    department: { type: String },
-    researchInterests: { type: [String], default: [] },
-    orcidId: { type: String },
     avatar: { type: String },
     passwordHash: { type: String, select: false },
   },
