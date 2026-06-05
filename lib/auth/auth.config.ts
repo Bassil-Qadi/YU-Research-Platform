@@ -31,11 +31,13 @@ export const authConfig = {
         token.role = user.role as UserRole | undefined;
         token.universityId = user.universityId;
         token.department = user.department;
+        token.sub = (user as any)._id?.toString() ?? token.sub
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
+        if (token.sub) session.user.id = token.sub
         session.user.id = token.id as string;
         session.user.role = (token.role as UserRole) ?? "Guest";
         session.user.universityId = token.universityId as string | undefined;
