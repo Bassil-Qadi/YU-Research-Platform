@@ -9,8 +9,8 @@ export const createProjectSchema = z.object({
   department: z.string().min(1, 'Department is required'),
   fundingSource: z.string().optional(),
   fundingAmount: z.number().positive().optional(),
-  startDate: z.string().datetime(),
-  endDate: z.string().datetime().optional(),
+  startDate: z.string().min(1, 'Start date is required'),
+  endDate: z.string().optional(),
   openPositions: z.array(z.string()).max(10).default([]),
 })
 

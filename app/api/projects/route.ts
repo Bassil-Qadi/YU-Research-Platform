@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'           // your NextAuth v5 auth() or getServerSession
-import { connectDB } from '@/lib/db'
+import { auth } from '@/auth'           // your NextAuth v5 auth() or getServerSession
+import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
 import { User } from '@/lib/db/models/User'
 import { createProjectSchema } from '@/lib/validations/project'
