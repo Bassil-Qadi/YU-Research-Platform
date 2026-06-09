@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { connectDB } from '@/lib/db'
+import { auth } from '@/auth'
+import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
 import { updateProjectSchema } from '@/lib/validations/project'
 import mongoose from 'mongoose'
@@ -39,10 +39,10 @@ export async function GET(_req: NextRequest, { params }: Params) {
     }
 
     // Enforce visibility
-    const isMember = project.members.some(
+    const isMember = (project as any).members.some(
       (m: any) => m.userId._id?.toString() === session.user.id
     )
-    if (project.visibility === 'private' && !isMember) {
+    if ((project as any).visibility === 'private' && !isMember) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

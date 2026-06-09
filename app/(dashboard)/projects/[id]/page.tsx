@@ -1,287 +1,306 @@
-import Link from "next/link";
+'use client'
+
+import { useParams, useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import {
-  CheckCircle2,
-  Circle,
-  FileText,
-  MessageSquare,
-  Settings,
-} from "lucide-react";
-import { PageContainer } from "@/components/layout/page-container";
-import { PageHeader } from "@/components/layout/page-header";
-import { EmptyState } from "@/components/layout/empty-state";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  CheckCircle2, Circle, Settings,
+  Building2, Calendar, Users, Tag,
+} from 'lucide-react'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
+import { InviteMemberDialog } from '@/components/projects/invite-member-dialog'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+  Card, CardContent, CardDescription,
+  CardHeader, CardTitle,
+} from '@/components/ui/card'
+import { EmptyState } from '@/components/layout/empty-state'
+import { useProject } from '@/hooks/useProject'
+import { apiFetch } from '@/lib/api'
+import { useQueryClient } from '@tanstack/react-query'
+import { cn } from '@/lib/utils'
 
-const teamPlaceholders = [
-  {
-    name: "Dr. Sarah Chen",
-    role: "Principal Investigator",
-    initials: "SC",
-    gradient: "from-violet-500 to-purple-600",
-  },
-  {
-    name: "Alex Rivera",
-    role: "Research Assistant",
-    initials: "AR",
-    gradient: "from-teal-500 to-emerald-600",
-  },
-  {
-    name: "You",
-    role: "Collaborator",
-    initials: "YO",
-    gradient: "from-blue-500 to-indigo-600",
-  },
-];
+const ROLE_LABELS: Record<string, string> = {
+  'pi': 'Principal Investigator',
+  'co-pi': 'Co-PI',
+  'contributor': 'Contributor',
+  'observer': 'Observer',
+}
 
-const milestones = [
-  {
-    title: "Literature review complete",
-    date: "Jan 2026",
-    status: "completed" as const,
-  },
-  {
-    title: "Data collection phase",
-    date: "Mar 2026",
-    status: "completed" as const,
-  },
-  {
-    title: "Model development & training",
-    date: "May 2026",
-    status: "current" as const,
-  },
-  {
-    title: "Peer review & publication",
-    date: "Aug 2026",
-    status: "upcoming" as const,
-  },
-];
+const ROLE_GRADIENTS: Record<string, string> = {
+  'pi': 'from-violet-500 to-purple-600',
+  'co-pi': 'from-blue-500 to-indigo-600',
+  'contributor': 'from-teal-500 to-emerald-600',
+  'observer': 'from-slate-400 to-slate-500',
+}
 
-const projectTitles: Record<string, string> = {
-  "ml-healthcare": "ML for Healthcare Diagnostics",
-  "climate-modeling": "Regional Climate Impact Modeling",
-  "policy-research": "Education Policy & Equity Study",
-  "genomics-study": "Genomics & Precision Medicine",
-};
+const STATUS_STYLES: Record<string, string> = {
+  active: 'bg-blue-500/15 text-blue-700 dark:text-blue-300',
+  seeking: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+  paused: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+  completed: 'bg-slate-500/15 text-slate-700 dark:text-slate-300',
+}
 
-export default function ProjectDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const title = projectTitles[params.id] ?? `Project ${params.id}`;
+export default function ProjectDetailPage() {
+  const { id } = useParams<{ id: string }>()
+  const { data: session } = useSession()
+  const router = useRouter()
+  const queryClient = useQueryClient()
+  const { data: project, isLoading, isError } = useProject(id)
+
+  // Derive permissions
+  const myMembership = project?.members.find(
+    (m) => m.userId._id === session?.user?.id
+  )
+  const isMember  = !!myMembership
+  const canManage = ['pi', 'co-pi'].includes(myMembership?.role ?? '')
+  const isPi      = myMembership?.role === 'pi'
+
+  async function handleLeave() {
+    if (!confirm('Leave this project?')) return
+    try {
+      await apiFetch(`/api/projects/${id}/members?userId=${session?.user?.id}`, {
+        method: 'DELETE',
+      })
+      await queryClient.invalidateQueries({ queryKey: ['project', id] })
+      router.push('/projects')
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <PageContainer className="space-y-6">
+        <Skeleton className="h-10 w-2/3 rounded-xl" />
+        <Skeleton className="h-6 w-1/3 rounded-xl" />
+        <Skeleton className="h-64 rounded-2xl" />
+      </PageContainer>
+    )
+  }
+
+  // Error / not found
+  if (isError || !project) {
+    return (
+      <PageContainer>
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <p className="font-display text-lg font-semibold">Project not found</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            It may have been deleted or you don't have access.
+          </p>
+          <Button className="mt-6 rounded-xl" onClick={() => router.push('/projects')}>
+            Back to projects
+          </Button>
+        </div>
+      </PageContainer>
+    )
+  }
 
   return (
     <PageContainer className="space-y-6">
       <PageHeader
-        title={title}
-        description="Project workspace for team collaboration, documents, and discussion."
+        title={project.title}
+        description={project.department}
         breadcrumbs={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Projects", href: "/projects" },
-          { label: params.id },
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Projects', href: '/projects' },
+          { label: project.title },
         ]}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" disabled className="gap-2 rounded-xl">
-              <Settings className="h-4 w-4" />
-              Settings
-            </Button>
-            <Button disabled className="rounded-xl bg-blue-600 hover:bg-blue-700">
-              Join project
-            </Button>
+            {canManage && (
+              <>
+                <InviteMemberDialog projectId={id} />
+                <Button variant="outline" className="gap-2 rounded-xl">
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </Button>
+              </>
+            )}
+            {isMember && !isPi && (
+              <Button variant="outline" className="rounded-xl text-destructive hover:text-destructive" onClick={handleLeave}>
+                Leave project
+              </Button>
+            )}
           </div>
         }
       />
 
+      {/* Status badges */}
       <div className="flex flex-wrap items-center gap-2">
-        <Badge className="rounded-full bg-blue-500/15 text-blue-700 dark:text-blue-300">
-          Active
+        <Badge className={cn('rounded-full', STATUS_STYLES[project.status])}>
+          {project.status === 'seeking' ? 'Recruiting' : project.status.charAt(0).toUpperCase() + project.status.slice(1)}
         </Badge>
-        <Badge className="rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-          Recruiting
-        </Badge>
-        <span className="text-sm text-muted-foreground">
-          School of Engineering · Demo data
-        </span>
+        {project.tags.map((tag) => (
+          <Badge key={tag} variant="secondary" className="rounded-full">
+            {tag}
+          </Badge>
+        ))}
+        {project.fundingSource && (
+          <span className="text-sm text-muted-foreground">· {project.fundingSource}</span>
+        )}
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="w-full justify-start sm:w-auto">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="team">Team</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="discussion">Discussion</TabsTrigger>
+          <TabsTrigger value="team">
+            Team ({project.members.length})
+          </TabsTrigger>
         </TabsList>
 
+        {/* ── Overview ── */}
         <TabsContent value="overview">
           <div className="grid gap-6 lg:grid-cols-3">
             <Card className="border-border/60 lg:col-span-2">
               <CardHeader>
-                <CardTitle className="font-display text-base">
-                  Project overview
-                </CardTitle>
-                <CardDescription>
-                  Summary, objectives, and timeline
-                </CardDescription>
+                <CardTitle className="font-display text-base">Abstract</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  This is a demo project workspace. Full project details will
-                  load from the API in Phase 2. Explore tabs for team
-                  management, document sharing, and project discussion.
+                  {project.abstract}
                 </p>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  {[
-                    { value: "8", label: "Team members" },
-                    { value: "12", label: "Documents" },
-                    { value: "47", label: "Messages" },
-                  ].map((stat) => (
-                    <div
-                      key={stat.label}
-                      className="rounded-xl border border-border/60 bg-gradient-to-br from-blue-500/5 to-violet-500/5 p-4"
-                    >
-                      <p className="font-display text-2xl font-bold tabular-nums">
-                        {stat.value}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {stat.label}
-                      </p>
+
+                {project.openPositions.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      <Users className="h-4 w-4" /> Open positions
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {project.openPositions.map((pos) => (
+                        <Badge key={pos} className="rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                          {pos}
+                        </Badge>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                )}
+
+                <div className="grid gap-3 sm:grid-cols-3 text-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Building2 className="h-4 w-4 shrink-0" />
+                    {project.department}
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="h-4 w-4 shrink-0" />
+                    Started {new Date(project.startDate).toLocaleDateString()}
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Users className="h-4 w-4 shrink-0" />
+                    {project.members.length} member{project.members.length !== 1 ? 's' : ''}
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-border/60">
-              <CardHeader>
-                <CardTitle className="font-display text-base">
-                  Milestones
-                </CardTitle>
-                <CardDescription>Project timeline</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ol className="relative space-y-0">
-                  {milestones.map((milestone, i) => (
-                    <li key={milestone.title} className="relative flex gap-3 pb-6 last:pb-0">
-                      {i < milestones.length - 1 && (
-                        <span
-                          className={cn(
-                            "absolute left-[11px] top-6 h-full w-0.5",
-                            milestone.status === "completed"
-                              ? "bg-blue-500"
-                              : "bg-border"
-                          )}
-                          aria-hidden
-                        />
-                      )}
-                      <div className="relative z-10 shrink-0">
-                        {milestone.status === "completed" ? (
-                          <CheckCircle2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                        ) : milestone.status === "current" ? (
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 ring-4 ring-blue-500/20">
-                            <Circle className="h-2 w-2 fill-white text-white" />
-                          </div>
-                        ) : (
-                          <Circle className="h-6 w-6 text-muted-foreground/40" />
-                        )}
+            {/* Sidebar info */}
+            <div className="space-y-4">
+              <Card className="border-border/60">
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-display text-base">Principal Investigator</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const pi = project.members.find((m) => m.role === 'pi')
+                    if (!pi) return <p className="text-sm text-muted-foreground">Not assigned</p>
+                    const initials = pi.userId.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+                    return (
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-xs font-semibold text-white">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">{pi.userId.name}</p>
+                          <p className="text-xs text-muted-foreground">{pi.userId.position ?? pi.userId.department ?? ''}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0 pt-0.5">
-                        <p
-                          className={cn(
-                            "text-sm font-medium",
-                            milestone.status === "upcoming" &&
-                              "text-muted-foreground"
-                          )}
-                        >
-                          {milestone.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {milestone.date}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </CardContent>
-            </Card>
+                    )
+                  })()}
+                </CardContent>
+              </Card>
+
+              {project.tags.length > 0 && (
+                <Card className="border-border/60">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="font-display text-base flex items-center gap-2">
+                      <Tag className="h-4 w-4" /> Tags
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {project.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="rounded-full">{tag}</Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
         </TabsContent>
 
+        {/* ── Team ── */}
         <TabsContent value="team">
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle className="font-display text-base">
-                Team members
-              </CardTitle>
-              <CardDescription>
-                Researchers collaborating on this project
-              </CardDescription>
+              <CardTitle className="font-display text-base">Team members</CardTitle>
+              <CardDescription>Researchers collaborating on this project</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="divide-y divide-border/60">
-                {teamPlaceholders.map((member) => (
-                  <li
-                    key={member.name}
-                    className="flex items-center gap-3 py-3.5 first:pt-0 last:pb-0"
-                  >
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback
-                        className={cn(
-                          "bg-gradient-to-br text-xs font-semibold text-white",
-                          member.gradient
-                        )}
-                      >
-                        {member.initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm font-medium">{member.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {member.role}
-                      </p>
-                    </div>
-                  </li>
-                ))}
+                {project.members.map((member) => {
+                  const initials = member.userId.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+                  const isCurrentUser = member.userId._id === session?.user?.id
+                  return (
+                    <li key={member.userId._id} className="flex items-center justify-between gap-3 py-3.5 first:pt-0 last:pb-0">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className={cn('bg-gradient-to-br text-xs font-semibold text-white', ROLE_GRADIENTS[member.role])}>
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {member.userId.name}
+                            {isCurrentUser && <span className="ml-2 text-xs text-muted-foreground">(you)</span>}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {ROLE_LABELS[member.role]} {member.userId.position ? `· ${member.userId.position}` : ''}
+                          </p>
+                        </div>
+                      </div>
+                      {/* PI can remove non-PI members */}
+                      {isPi && member.role !== 'pi' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 rounded-lg text-xs text-muted-foreground hover:text-destructive"
+                          onClick={async () => {
+                            if (!confirm(`Remove ${member.userId.name}?`)) return
+                            try {
+                              await apiFetch(`/api/projects/${id}/members?userId=${member.userId._id}`, { method: 'DELETE' })
+                              queryClient.invalidateQueries({ queryKey: ['project', id] })
+                            } catch (err: any) { alert(err.message) }
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="documents">
-          <EmptyState
-            icon={FileText}
-            title="No documents yet"
-            description="Shared files and research documents will appear here once file storage is connected."
-            accent="blue"
-            className="border-solid bg-card"
-          />
-        </TabsContent>
-
-        <TabsContent value="discussion">
-          <EmptyState
-            icon={MessageSquare}
-            title="No discussion threads"
-            description="Project-specific messaging and announcements will be available in Phase 2."
-            accent="violet"
-            action={
-              <Button asChild variant="outline" className="rounded-xl">
-                <Link href="/messages">Go to messages</Link>
-              </Button>
-            }
-            className="border-solid bg-card"
-          />
-        </TabsContent>
       </Tabs>
     </PageContainer>
-  );
+  )
 }
