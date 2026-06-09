@@ -1,89 +1,125 @@
-import { PageContainer } from "@/components/layout/page-container";
-import { PageHeader } from "@/components/layout/page-header";
-import { ResearcherCard } from "@/components/shells/researcher-card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { SlidersHorizontal } from "lucide-react";
+'use client'
 
-const placeholderResearchers = [
-  {
-    id: "demo-faculty",
-    name: "Dr. Sarah Chen",
-    title: "Associate Professor, Computer Science",
-    department: "School of Engineering",
-    interests: ["Machine Learning", "Healthcare AI", "Data Ethics"],
-  },
-  {
-    id: "demo-student",
-    name: "Alex Rivera",
-    title: "PhD Candidate, Biology",
-    department: "College of Natural Sciences",
-    interests: ["Genomics", "Bioinformatics", "CRISPR"],
-  },
-  {
-    id: "demo-staff",
-    name: "Prof. James Okonkwo",
-    title: "Professor, Economics",
-    department: "School of Social Sciences",
-    interests: ["Development Economics", "Policy Research"],
-  },
-  {
-    id: "demo-researcher-4",
-    name: "Dr. Emily Nakamura",
-    title: "Assistant Professor, Environmental Science",
-    department: "College of Natural Sciences",
-    interests: ["Climate Modeling", "Sustainability", "Remote Sensing"],
-  },
-  {
-    id: "demo-researcher-5",
-    name: "Marcus Williams",
-    title: "Graduate Researcher, Physics",
-    department: "School of Engineering",
-    interests: ["Quantum Computing", "Materials Science"],
-  },
-  {
-    id: "demo-researcher-6",
-    name: "Dr. Priya Sharma",
-    title: "Research Fellow, Public Health",
-    department: "School of Medicine",
-    interests: ["Epidemiology", "Health Policy", "Biostatistics"],
-  },
-];
+import { useState } from 'react'
+import { SlidersHorizontal } from 'lucide-react'
+import { PageContainer } from '@/components/layout/page-container'
+import { PageHeader } from '@/components/layout/page-header'
+import { ResearcherCard } from '@/components/shells/researcher-card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  DropdownMenu, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useUsers } from '@/hooks/useUsers'
+import { useDebounce } from '@/hooks/useDebounce'
+
+const DEPARTMENTS = [
+  'All departments',
+  'School of Engineering',
+  'College of Natural Sciences',
+  'School of Social Sciences',
+  'School of Medicine',
+]
+
+const ROLES = ['All roles', 'Faculty', 'Student', 'Staff']
 
 export default function DirectoryPage() {
+  const [search, setSearch]     = useState('')
+  const [department, setDept]   = useState('')
+  const [role, setRole]         = useState('')
+  const debouncedSearch         = useDebounce(search, 400)
+
+  const { data, isLoading, isError } = useUsers({
+    q:          debouncedSearch || undefined,
+    department: department && department !== 'All departments' ? department : undefined,
+    role:       role && role !== 'All roles' ? role : undefined,
+  })
+
+  const users = data?.users ?? []
+
   return (
     <PageContainer>
       <PageHeader
         title="Researcher Directory"
         description="Search faculty, students, and staff by department and research interests."
         breadcrumbs={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Directory" },
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Directory' },
         ]}
       />
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <Input
           placeholder="Search by name, department, or interest…"
-          disabled
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           className="max-w-lg rounded-xl"
-          aria-label="Search researchers (coming soon)"
         />
-        <Button variant="outline" disabled className="gap-2 rounded-xl sm:w-auto">
-          <SlidersHorizontal className="h-4 w-4" />
-          Filters
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-2 rounded-xl sm:w-auto">
+              <SlidersHorizontal className="h-4 w-4" />
+              {department && department !== 'All departments' ? department : 'Department'}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {DEPARTMENTS.map((d) => (
+              <DropdownMenuItem key={d} onClick={() => setDept(d)}>{d}</DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-2 rounded-xl sm:w-auto">
+              {role && role !== 'All roles' ? role : 'Role'}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {ROLES.map((r) => (
+              <DropdownMenuItem key={r} onClick={() => setRole(r)}>{r}</DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        Sample profiles below — full search and filters arrive in Phase 2.
-      </p>
+      {isError && (
+        <p className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          Failed to load researchers. Please try again.
+        </p>
+      )}
 
-      <div className="stagger-children grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {placeholderResearchers.map((researcher) => (
-          <ResearcherCard key={researcher.id} {...researcher} />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-48 rounded-2xl" />
+          ))}
+        </div>
+      ) : users.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 py-20 text-center">
+          <p className="font-display font-semibold">No researchers found</p>
+          <p className="mt-1 text-sm text-muted-foreground">Try adjusting your search or filters</p>
+        </div>
+      ) : (
+        <>
+          <p className="text-sm text-muted-foreground">
+            {data?.pagination.total} researcher{data?.pagination.total !== 1 ? 's' : ''} found
+          </p>
+          <div className="stagger-children grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {users.map((user) => (
+              <ResearcherCard
+                key={user._id}
+                id={user._id}
+                name={user.name}
+                title={`${user.position ?? user.role}${user.department ? `, ${user.department}` : ''}`}
+                department={user.department ?? ''}
+                interests={user.researchInterests ?? []}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </PageContainer>
-  );
+  )
 }
