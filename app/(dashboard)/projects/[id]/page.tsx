@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
   CheckCircle2, Circle, Settings,
-  Building2, Calendar, Users, Tag,
+  Building2, Calendar, Users, Tag, MessageSquare
 } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
@@ -23,6 +23,8 @@ import { useProject } from '@/hooks/useProject'
 import { apiFetch } from '@/lib/api'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
+import { ProjectChat } from '@/components/messaging/project-chat'
+import { KanbanBoard } from '@/components/tasks/kanban-board'
 
 const ROLE_LABELS: Record<string, string> = {
   'pi': 'Principal Investigator',
@@ -152,6 +154,8 @@ export default function ProjectDetailPage() {
           <TabsTrigger value="team">
             Team ({project.members.length})
           </TabsTrigger>
+          <TabsTrigger value="discussion">Discussion</TabsTrigger>
+          <TabsTrigger value="tasks">Tasks</TabsTrigger>
         </TabsList>
 
         {/* ── Overview ── */}
@@ -299,6 +303,40 @@ export default function ProjectDetailPage() {
               </ul>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Discission */}
+        <TabsContent value="discussion">
+          {isMember ? (
+            <ProjectChat projectId={id} />
+          ) : (
+            <EmptyState
+              icon={MessageSquare}
+              title="Members only"
+              description="Join this project to participate in the discussion."
+              accent="violet"
+            />
+          )}
+        </TabsContent>
+
+        {/* Tasks */}
+        <TabsContent value="tasks">
+          {isMember ? (
+            <KanbanBoard
+              projectId={id}
+              members={project.members.map((m) => ({
+                _id:  m.userId._id,
+                name: m.userId.name,
+              }))}
+            />
+          ) : (
+            <EmptyState
+              icon={CheckCircle2}
+              title="Members only"
+              description="Join this project to view and manage tasks."
+              accent="blue"
+            />
+          )}
         </TabsContent>
       </Tabs>
     </PageContainer>
