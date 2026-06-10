@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
 import Task from '@/lib/db/models/Task'
 import { z } from 'zod'
+import { createNotifications } from '@/lib/notifications'
 
 type Params = { params: { id: string; taskId: string } }
 
@@ -55,13 +56,26 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       .populate('createdBy',  'name')
       .lean()
 
-    if (!task) {
-      return NextResponse.json({ error: 'Task not found' }, { status: 404 })
-    }
-
     // Emit via Socket.io
     const io = (global as any).io
     if (io) io.to(`project:${params.id}`).emit('task-updated', task)
+
+  if (
+    parsed.data.assigneeId &&
+    parsed.data.assigneeId !== session.user.id
+  ) {
+    await createNotifications({
+      userIds: [parsed.data.assigneeId],
+      type:    'task-assigned',
+      title:   'You were assigned a task',
+      body:    `You've been assigned: "${task?.title}"`,
+      link:    `/projects/${params.id}`,
+    })
+  }
+
+    if (!task) {
+      return NextResponse.json({ error: 'Task not found' }, { status: 404 })
+    }
 
     return NextResponse.json(task)
   } catch (err) {

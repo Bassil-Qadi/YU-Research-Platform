@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
 import { User } from '@/lib/db/models/user'
 import { inviteMemberSchema } from '@/lib/validations/project'
+import { createNotifications } from '@/lib/notifications'
 
 type Params = { params: { id: string } }
 
@@ -60,6 +61,13 @@ export async function POST(req: NextRequest, { params }: Params) {
     await project.save()
 
     // TODO: send email notification here (Resend / SES)
+    await createNotifications({
+      userIds: [invitee._id],
+      type:    'project-invite',
+      title:   'You were added to a project',
+      body:    `You've been added to a project as ${parsed.data.role}.`,
+      link:    `/projects/${params.id}`,
+    })
 
     return NextResponse.json({ success: true, memberId: invitee._id })
   } catch (err) {
