@@ -34,6 +34,11 @@ app.prepare().then(() => {
       socket.leave(`project:${projectId}`)
     })
 
+    socket.on('join-user-room', (userId: string) => {
+      socket.join(`user:${userId}`)
+      console.log(`${socket.id} joined user room: ${userId}`)
+    })
+
     socket.on('typing', ({ projectId, userName }: { projectId: string; userName: string }) => {
       socket.to(`project:${projectId}`).emit('user-typing', { userName })
     })

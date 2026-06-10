@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
 import Task from '@/lib/db/models/Task'
 import { z } from 'zod'
+import { createNotifications } from '@/lib/notifications'
 
 type Params = { params: { id: string } }
 
@@ -86,6 +87,14 @@ export async function POST(req: NextRequest, { params }: Params) {
       { path: 'assigneeId', select: 'name avatarUrl' },
       { path: 'createdBy',  select: 'name' },
     ])
+
+    await createNotifications({
+      userIds: [parsed.data.assigneeId],
+      type:    'task-assigned',
+      title:   'You were assigned a task',
+      body:    `You've been assigned: "${task?.title}"`,
+      link:    `/projects/${params.id}`,
+    })
 
     // Emit via Socket.io
     const io = (global as any).io

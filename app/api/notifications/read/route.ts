@@ -3,7 +3,8 @@ import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
 import Notification from '@/lib/db/models/Notification'
 
-export async function GET(_req: NextRequest) {
+// PATCH /api/notifications/read — mark ALL as read
+export async function PATCH(_req: NextRequest) {
   try {
     const session = await auth()
     if (!session?.user?.id) {
@@ -12,17 +13,14 @@ export async function GET(_req: NextRequest) {
 
     await connectDB()
 
-    const [notifications, unreadCount] = await Promise.all([
-      Notification.find({ userId: session.user.id })
-        .sort({ createdAt: -1 })
-        .limit(30)
-        .lean(),
-      Notification.countDocuments({ userId: session.user.id, read: false }),
-    ])
+    await Notification.updateMany(
+      { userId: session.user.id, read: false },
+      { $set: { read: true } }
+    )
 
-    return NextResponse.json({ notifications, unreadCount })
+    return NextResponse.json({ success: true })
   } catch (err) {
-    console.error('[GET /api/notifications]', err)
+    console.error('[PATCH /api/notifications/read]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
