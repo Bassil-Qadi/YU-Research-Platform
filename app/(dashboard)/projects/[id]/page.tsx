@@ -166,7 +166,7 @@ export default function ProjectDetailPage() {
                 <CardTitle className="font-display text-base">Abstract</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <p className="text-sm leading-relaxed text-muted-foreground">
+                <p className="text-sm leading-relaxed text-muted-foreground break-all">
                   {project.abstract}
                 </p>
 
