@@ -43,7 +43,7 @@ export default function ProjectsPage() {
     q:          debouncedSearch || undefined,
     status:     activeFilter !== 'mine' ? activeFilter || undefined : undefined,
     mine:       activeFilter === 'mine',
-    department: department && department !== 'All departments' ? department : undefined,
+    department: department && department !== 'All departments' ? department.toLowerCase() : undefined,
   })
 
   const projects = data?.projects ?? []
