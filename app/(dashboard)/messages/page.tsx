@@ -45,8 +45,8 @@ export default function MessagesPage() {
   const activeId       = activeConv?.id ?? null
 
   return (
-    <PageContainer className="!p-0 overflow-hidden">
-      <div className="flex h-[calc(100vh-4rem)] overflow-hidden rounded-2xl border border-border/60 bg-card/80 shadow-elevated backdrop-blur-sm">
+    <PageContainer className="!p-4 overflow-hidden">
+      <div className="flex overflow-hidden rounded-2xl border border-border/60 bg-card/80 shadow-elevated backdrop-blur-sm">
 
         {/* ── Sidebar ── */}
         <aside className="flex w-full flex-col border-r border-border/60 md:w-80 lg:w-96">
