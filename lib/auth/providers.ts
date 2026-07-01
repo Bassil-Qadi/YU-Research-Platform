@@ -61,6 +61,13 @@ export function getAuthProviders(): Provider[] {
           const user = await ensureDevUser(email, password);
           if (!user) return null;
 
+          if (user.status === 'pending') {
+            throw new Error('PENDING')
+          }
+          if (user.status === 'rejected') {
+            throw new Error('REJECTED')
+          }
+
           return {
             id: user._id.toString(),
             email: user.email,

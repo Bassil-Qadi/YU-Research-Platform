@@ -17,6 +17,7 @@ import {
   CardHeader, CardTitle,
 } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { PendingUsers } from '@/components/admin/pending-users'
 
 const STATUS_STYLES: Record<string, string> = {
   active:    'bg-blue-500/15 text-blue-700 dark:text-blue-300',
@@ -109,6 +110,9 @@ export default function AdminPage() {
           />
         </div>
       )}
+
+      {/* Pending users */}
+      <PendingUsers />
 
       {/* Charts row */}
       <div className="grid gap-6 lg:grid-cols-3">

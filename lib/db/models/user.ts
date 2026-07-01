@@ -14,6 +14,13 @@ const userSchema = new Schema(
     universityId: { type: String, required: true, unique: true, index: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     name: { type: String, required: true },
+    status: {
+      type:    String,
+      enum:    ['pending', 'active', 'rejected'],
+      default: 'pending',
+      index:   true,
+    },
+    rejectionReason: { type: String },
     role: {
       type: String,
       enum: USER_ROLES,

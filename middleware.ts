@@ -6,7 +6,7 @@ import type { UserRole } from "@/types";
 
 const { auth } = NextAuth(authConfig);
 
-const publicPaths = ["/", "/login"];
+const publicPaths = ["/", "/login", "/register"];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;

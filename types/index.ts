@@ -1,10 +1,10 @@
 export const USER_ROLES = [
-  "Admin",
-  "Faculty",
-  "Researcher",
-  "Student",
-  "Guest",
-] as const;
+  'Student',
+  'Faculty', 
+  'Staff',
+  'Researcher',
+  'Admin',
+] as const
 
 export type UserRole = (typeof USER_ROLES)[number];
 

@@ -83,7 +83,7 @@ export default async function HomePage() {
               <Link href="/login">Sign in</Link>
             </Button>
             <Button asChild size="sm" className="btn-glow rounded-lg shadow-md">
-              <Link href="/login">Get started</Link>
+              <Link href="/register">Get started</Link>
             </Button>
           </div>
         </div>
@@ -223,7 +223,7 @@ export default async function HomePage() {
             Sign in with your university credentials to get started.
           </p>
           <Button asChild size="lg" className="mt-8 rounded-xl px-8 shadow-lg">
-            <Link href="/login">Get started today</Link>
+            <Link href="/register">Get started today</Link>
           </Button>
         </div>
       </section>
