@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useDebounce } from '@/hooks/useDebounce'  // we'll add this below
 import { Grid3X3, List, SlidersHorizontal } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
-import { ProjectCard } from '@/components/shells/project-card'
+import { ProjectCard, type ProjectCardProps } from '@/components/shells/project-card'
 import { CreateProjectDialog } from '@/components/projects/create-project-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,8 +14,16 @@ import {
   DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useProjects } from '@/hooks/useProjects'
+import { useProjects, type ProjectSummary } from '@/hooks/useProjects'
 import { cn } from '@/lib/utils'
+
+/** Project statuses as the API stores them, in the card's own vocabulary. */
+const CARD_STATUS: Record<ProjectSummary['status'], ProjectCardProps['status']> = {
+  active:    'active',
+  seeking:   'recruiting',
+  completed: 'completed',
+  paused:    'paused',
+}
 
 const STATUS_FILTERS = [
   { label: 'All',       value: '' },
@@ -152,7 +160,7 @@ export default function ProjectsPage() {
                 title={project.title}
                 description={project.abstract}
                 department={project.department}
-                status={project.status === 'seeking' ? 'recruiting' : project.status as any}
+                status={CARD_STATUS[project.status]}
                 memberCount={project.members.length}
                 updatedAt={new Date(project.updatedAt).toLocaleDateString()}
               />

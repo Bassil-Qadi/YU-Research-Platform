@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
-import { User } from '@/lib/db/models/user'
+import { User, type IUser } from '@/lib/db/models/user'
+import type { FilterQuery } from 'mongoose'
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
     const page       = parseInt(searchParams.get('page') ?? '1')
     const limit      = Math.min(parseInt(searchParams.get('limit') ?? '12'), 50)
 
-    const filter: Record<string, any> = { isPublic: true }
+    const filter: FilterQuery<IUser> = { isPublic: true }
 
     if (department) filter.department = department
     if (role)       filter.role = role

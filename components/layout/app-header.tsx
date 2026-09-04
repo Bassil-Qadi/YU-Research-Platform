@@ -1,10 +1,9 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { MobileNav } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserNav } from "@/components/layout/user-nav";
-import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,

@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import { DEFAULT_ROLE } from "@/lib/auth/rbac";
 import type { UserRole } from "@/types";
 
 /** Edge-safe config — no Mongoose or DB imports (used by middleware) */
@@ -31,15 +32,13 @@ export const authConfig = {
         token.role = user.role as UserRole | undefined;
         token.universityId = user.universityId;
         token.department = user.department;
-        token.sub = (user as any)._id?.toString() ?? token.sub
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        if (token.sub) session.user.id = token.sub
-        session.user.id = token.id as string;
-        session.user.role = (token.role as UserRole) ?? "Guest";
+        session.user.id = (token.id as string | undefined) ?? token.sub ?? "";
+        session.user.role = (token.role as UserRole) ?? DEFAULT_ROLE;
         session.user.universityId = token.universityId as string | undefined;
         session.user.department = token.department as string | undefined;
       }

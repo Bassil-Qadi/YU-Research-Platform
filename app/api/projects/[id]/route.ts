@@ -3,17 +3,10 @@ import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
 import { updateProjectSchema } from '@/lib/validations/project'
+import { canEditProject, isMember, isProjectPi } from '@/lib/projects/membership'
 import mongoose from 'mongoose'
 
 type Params = { params: { id: string } }
-
-function canEdit(project: any, userId: string) {
-  return project.members.some(
-    (m: any) =>
-      m.userId._id?.toString() === userId &&
-      ['pi', 'co-pi'].includes(m.role)
-  )
-}
 
 // GET /api/projects/[id]
 export async function GET(_req: NextRequest, { params }: Params) {
@@ -39,10 +32,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     }
 
     // Enforce visibility
-    const isMember = (project as any).members.some(
-      (m: any) => m.userId._id?.toString() === session.user.id
-    )
-    if ((project as any).visibility === 'private' && !isMember) {
+    if (project.visibility === 'private' && !isMember(project, session.user.id)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -68,7 +58,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
-    if (!canEdit(project, session.user.id)) {
+    if (!canEditProject(project, session.user.id)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -109,10 +99,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
-    const isPi = project.members.some(
-      (m: any) => m.userId._id?.toString() === session.user.id && m.role === 'pi'
-    )
-    if (!isPi) {
+    if (!isProjectPi(project, session.user.id)) {
       return NextResponse.json({ error: 'Only the PI can delete a project' }, { status: 403 })
     }
 

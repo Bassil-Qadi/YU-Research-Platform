@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, errorMessage } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -48,8 +48,8 @@ export function PendingUsers() {
       )
       // Refresh admin stats
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err) {
+      alert(errorMessage(err, 'Failed to update this account'))
     } finally {
       setActing(null)
     }

@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from 'mongoose'
+import mongoose, { Schema, Document, Types, type Model } from 'mongoose'
 
 export type NotificationType =
   | 'project-invite'
@@ -36,5 +36,7 @@ const NotificationSchema = new Schema<INotification>(
 
 NotificationSchema.index({ userId: 1, read: 1, createdAt: -1 })
 
-export default mongoose.models.Notification ||
-  mongoose.model<INotification>('Notification', NotificationSchema)
+const Notification: Model<INotification> =
+  mongoose.models.Notification ?? mongoose.model<INotification>('Notification', NotificationSchema)
+
+export default Notification

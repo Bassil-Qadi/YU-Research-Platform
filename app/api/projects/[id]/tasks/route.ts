@@ -5,6 +5,7 @@ import Project from '@/lib/db/models/Project'
 import Task from '@/lib/db/models/Task'
 import { z } from 'zod'
 import { createNotifications } from '@/lib/notifications'
+import { isMember } from '@/lib/projects/membership'
 
 type Params = { params: { id: string } }
 
@@ -17,9 +18,9 @@ const createTaskSchema = z.object({
   dueDate:     z.string().optional(),
 })
 
-async function isMember(projectId: string, userId: string) {
+async function isProjectMember(projectId: string, userId: string) {
   const project = await Project.findById(projectId).select('members').lean()
-  return (project as any).members.some((m: any) => m.userId.toString() === userId)
+  return isMember(project, userId)
 }
 
 // GET /api/projects/[id]/tasks
@@ -32,7 +33,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
     await connectDB()
 
-    if (!await isMember(params.id, session.user.id)) {
+    if (!await isProjectMember(params.id, session.user.id)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     await connectDB()
 
-    if (!await isMember(params.id, session.user.id)) {
+    if (!await isProjectMember(params.id, session.user.id)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -75,12 +76,17 @@ export async function POST(req: NextRequest, { params }: Params) {
       status:    parsed.data.status,
     }).sort({ order: -1 }).lean()
 
+    // Optional fields are spread in only when set, so an unassigned task is
+    // never written with an explicit undefined.
+    const { assigneeId, dueDate, ...taskData } = parsed.data
+
     const task = await Task.create({
-      ...parsed.data,
+      ...taskData,
       projectId: params.id,
       createdBy: session.user.id,
       order:     (lastTask?.order ?? -1) + 1,
-      dueDate:   parsed.data.dueDate ? new Date(parsed.data.dueDate) : undefined,
+      ...(assigneeId ? { assigneeId } : {}),
+      ...(dueDate    ? { dueDate: new Date(dueDate) } : {}),
     })
 
     const populated = await task.populate([
@@ -88,17 +94,19 @@ export async function POST(req: NextRequest, { params }: Params) {
       { path: 'createdBy',  select: 'name' },
     ])
 
-    await createNotifications({
-      userIds: [parsed.data.assigneeId],
-      type:    'task-assigned',
-      title:   'You were assigned a task',
-      body:    `You've been assigned: "${task?.title}"`,
-      link:    `/projects/${params.id}`,
-    })
+    // Only notify a real assignee, and never the person doing the assigning.
+    if (assigneeId && assigneeId !== session.user.id) {
+      await createNotifications({
+        userIds: [assigneeId],
+        type:    'task-assigned',
+        title:   'You were assigned a task',
+        body:    `You've been assigned: "${task.title}"`,
+        link:    `/projects/${params.id}`,
+      })
+    }
 
     // Emit via Socket.io
-    const io = (global as any).io
-    if (io) io.to(`project:${params.id}`).emit('task-created', populated)
+    global.io?.to(`project:${params.id}`).emit('task-created', populated)
 
     return NextResponse.json(populated, { status: 201 })
   } catch (err) {

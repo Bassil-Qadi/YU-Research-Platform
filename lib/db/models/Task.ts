@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from 'mongoose'
+import mongoose, { Schema, Document, Types, type Model } from 'mongoose'
 
 export type TaskStatus   = 'todo' | 'in-progress' | 'in-review' | 'done'
 export type TaskPriority = 'low' | 'medium' | 'high'
@@ -34,5 +34,7 @@ const TaskSchema = new Schema<ITask>(
 
 TaskSchema.index({ projectId: 1, status: 1, order: 1 })
 
-export default mongoose.models.Task ||
-  mongoose.model<ITask>('Task', TaskSchema)
+const Task: Model<ITask> =
+  mongoose.models.Task ?? mongoose.model<ITask>('Task', TaskSchema)
+
+export default Task

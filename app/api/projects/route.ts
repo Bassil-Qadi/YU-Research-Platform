@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'           // your NextAuth v5 auth() or getServerSession
 import { connectDB } from '@/lib/db/connect'
-import Project from '@/lib/db/models/Project'
-import { User } from '@/lib/db/models/user'
+import Project, { type IProject } from '@/lib/db/models/Project'
 import { createProjectSchema } from '@/lib/validations/project'
+import type { FilterQuery } from 'mongoose'
 
 // GET /api/projects — list & search
 export async function GET(req: NextRequest) {
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const limit      = Math.min(parseInt(searchParams.get('limit') ?? '12'), 50)
 
     // Build filter
-    const filter: Record<string, any> = {}
+    const filter: FilterQuery<IProject> = {}
 
     // Visibility: guests see public only, university members see public+university
     filter.$or = [

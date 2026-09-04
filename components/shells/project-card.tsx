@@ -17,7 +17,7 @@ export interface ProjectCardProps {
   title: string;
   description: string;
   department?: string;
-  status?: "active" | "recruiting" | "completed" | "draft";
+  status?: "active" | "recruiting" | "completed" | "paused" | "draft";
   memberCount?: number;
   updatedAt?: string;
   thumbnailGradient?: string;
@@ -40,9 +40,13 @@ const statusStyles: Record<
     label: "Completed",
     className: "bg-muted text-muted-foreground",
   },
+  paused: {
+    label: "Paused",
+    className: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/20",
+  },
   draft: {
     label: "Draft",
-    className: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/20",
+    className: "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-500/20",
   },
 };
 

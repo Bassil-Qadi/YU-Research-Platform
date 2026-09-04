@@ -6,8 +6,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Plus } from 'lucide-react'
+import type { z } from 'zod'
 import { createProjectSchema, type CreateProjectInput } from '@/lib/validations/project'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, errorMessage } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -21,14 +22,16 @@ import {
   SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 
+type CreateProjectFormValues = z.input<typeof createProjectSchema>
+
 export function CreateProjectDialog() {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const queryClient = useQueryClient()
 
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting } } =
-  useForm<CreateProjectInput>({
+  const { register, handleSubmit, setValue, reset, formState: { errors, isSubmitting } } =
+  useForm<CreateProjectFormValues, unknown, CreateProjectInput>({
     resolver: zodResolver(createProjectSchema),
     defaultValues: {
       status: 'active',
@@ -40,7 +43,6 @@ export function CreateProjectDialog() {
 
   async function onSubmit(data: CreateProjectInput) {
     setError(null)
-    console.log('Submitting:', data)   // 👈 add this
     try {
       const project = await apiFetch<{ _id: string }>('/api/projects', {
         method: 'POST',
@@ -50,9 +52,8 @@ export function CreateProjectDialog() {
       setOpen(false)
       reset()
       router.push(`/projects/${project._id}`)
-    } catch (err: any) {
-      console.error('Create project error:', err)   // 👈 and this
-      setError(err.message ?? 'Failed to create project')
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to create project'))
     }
   }
 
@@ -93,7 +94,7 @@ export function CreateProjectDialog() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Status</Label>
-              <Select defaultValue="active" onValueChange={(v) => setValue('status', v as any)}>
+              <Select defaultValue="active" onValueChange={(v) => setValue('status', v as CreateProjectInput['status'])}>
                 <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>
@@ -105,7 +106,7 @@ export function CreateProjectDialog() {
             </div>
             <div className="space-y-1.5">
               <Label>Visibility</Label>
-              <Select defaultValue="university" onValueChange={(v) => setValue('visibility', v as any)}>
+              <Select defaultValue="university" onValueChange={(v) => setValue('visibility', v as CreateProjectInput['visibility'])}>
                 <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="public">Public</SelectItem>

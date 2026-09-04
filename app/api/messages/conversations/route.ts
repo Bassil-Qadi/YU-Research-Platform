@@ -42,8 +42,11 @@ export async function GET() {
           lastMessage: lastMessage
             ? {
                 content:   lastMessage.content,
-                senderName: (lastMessage.senderId as any)?.name ?? 'Unknown',
-                createdAt:  lastMessage.createdAt,
+                // senderId is populated above; Mongoose still types it as an ObjectId.
+                senderName:
+                  (lastMessage.senderId as unknown as { name?: string })?.name ??
+                  'Unknown',
+                createdAt: lastMessage.createdAt,
               }
             : null,
           unreadCount,

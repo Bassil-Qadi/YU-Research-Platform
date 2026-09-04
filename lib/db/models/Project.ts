@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from 'mongoose'
+import mongoose, { Schema, Document, Types, type Model } from 'mongoose'
 
 export type ProjectStatus = 'active' | 'completed' | 'seeking' | 'paused'
 export type ProjectVisibility = 'public' | 'university' | 'private'
@@ -61,4 +61,7 @@ ProjectSchema.index({ 'members.userId': 1 })
 ProjectSchema.index({ status: 1, visibility: 1 })
 ProjectSchema.index({ department: 1 })
 
-export default mongoose.models.Project || mongoose.model<IProject>('Project', ProjectSchema)
+const Project: Model<IProject> =
+  mongoose.models.Project ?? mongoose.model<IProject>('Project', ProjectSchema)
+
+export default Project

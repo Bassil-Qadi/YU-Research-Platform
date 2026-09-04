@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { BookOpen, Loader2, CheckCircle2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
@@ -47,7 +46,6 @@ const DEPARTMENTS = [
 ]
 
 export default function RegisterPage() {
-  const router = useRouter()
   const [submitted, setSubmitted] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
 
@@ -98,7 +96,7 @@ export default function RegisterPage() {
               Registration submitted!
             </CardTitle>
             <CardDescription>
-              Your account is pending admin approval. You'll be able to log in
+              Your account is pending admin approval. You&apos;ll be able to log in
               once an administrator reviews your request. This usually takes
               1–2 business days.
             </CardDescription>
@@ -216,7 +214,7 @@ export default function RegisterPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label>Role</Label>
-                  <Select onValueChange={(v) => setValue('role', v as any)}>
+                  <Select onValueChange={(v) => setValue('role', v as RegisterInput['role'])}>
                     <SelectTrigger className="h-11 rounded-xl">
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>

@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
 import Message from '@/lib/db/models/Message'
 import { z } from 'zod'
+import { findMember } from '@/lib/projects/membership'
 
 type Params = { params: { id: string } }
 
@@ -15,10 +16,7 @@ const sendMessageSchema = z.object({
 async function getProjectMembership(projectId: string, userId: string) {
   const project = await Project.findById(projectId).select('members visibility').lean()
   if (!project) return null
-  const member = (project as any).members.find(
-    (m: any) => m.userId.toString() === userId
-  )
-  return { project, member }
+  return { project, member: findMember(project, userId) }
 }
 
 // GET /api/projects/[id]/messages
@@ -95,10 +93,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     const populated = await message.populate('senderId', 'name avatarUrl position')
 
     // Emit to all users in the project room via Socket.io
-    const io = (global as any).io
-    if (io) {
-      io.to(`project:${params.id}`).emit('new-message', populated)
-    }
+    global.io?.to(`project:${params.id}`).emit('new-message', populated)
 
     return NextResponse.json(populated, { status: 201 })
   } catch (err) {

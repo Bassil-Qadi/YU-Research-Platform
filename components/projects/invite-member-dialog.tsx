@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, UserPlus } from 'lucide-react'
 import { inviteMemberSchema, type InviteMemberInput } from '@/lib/validations/project'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, errorMessage } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -43,8 +43,8 @@ export function InviteMemberDialog({ projectId }: { projectId: string }) {
       setSuccess(true)
       reset()
       setTimeout(() => setOpen(false), 1200)
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to invite member')
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to invite member'))
     }
   }
 
@@ -89,7 +89,7 @@ export function InviteMemberDialog({ projectId }: { projectId: string }) {
 
           <div className="space-y-1.5">
             <Label>Role</Label>
-            <Select defaultValue="contributor" onValueChange={(v) => setValue('role', v as any)}>
+            <Select defaultValue="contributor" onValueChange={(v) => setValue('role', v as InviteMemberInput['role'])}>
               <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="co-pi">Co-PI</SelectItem>

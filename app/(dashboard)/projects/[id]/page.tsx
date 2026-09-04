@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
-  CheckCircle2, Circle, Settings,
+  CheckCircle2, Settings,
   Building2, Calendar, Users, Tag, MessageSquare
 } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/card'
 import { EmptyState } from '@/components/layout/empty-state'
 import { useProject } from '@/hooks/useProject'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, errorMessage } from '@/lib/api'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { ProjectChat } from '@/components/messaging/project-chat'
@@ -70,8 +70,8 @@ export default function ProjectDetailPage() {
       })
       await queryClient.invalidateQueries({ queryKey: ['project', id] })
       router.push('/projects')
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err) {
+      alert(errorMessage(err, 'Failed to delete this project'))
     }
   }
 
@@ -93,7 +93,7 @@ export default function ProjectDetailPage() {
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <p className="font-display text-lg font-semibold">Project not found</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            It may have been deleted or you don't have access.
+            It may have been deleted or you don&apos;t have access.
           </p>
           <Button className="mt-6 rounded-xl" onClick={() => router.push('/projects')}>
             Back to projects
@@ -291,7 +291,7 @@ export default function ProjectDetailPage() {
                             try {
                               await apiFetch(`/api/projects/${id}/members?userId=${member.userId._id}`, { method: 'DELETE' })
                               queryClient.invalidateQueries({ queryKey: ['project', id] })
-                            } catch (err: any) { alert(err.message) }
+                            } catch (err) { alert(errorMessage(err, 'Failed to remove this member')) }
                           }}
                         >
                           Remove

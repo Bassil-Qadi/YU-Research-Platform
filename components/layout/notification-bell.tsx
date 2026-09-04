@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { Bell, Check } from 'lucide-react'
-import { useNotifications } from '@/hooks/useNotifications'
+import { useNotifications, type INotification } from '@/hooks/useNotifications'
 
 import {
   DropdownMenu, DropdownMenuContent,
@@ -26,7 +26,7 @@ export function NotificationBell() {
   const notifications = data?.notifications ?? []
   const unreadCount   = data?.unreadCount   ?? 0
 
-  async function handleClick(notification: any) {
+  async function handleClick(notification: INotification) {
     if (!notification.read) await markOneRead(notification._id)
     if (notification.link) router.push(notification.link)
   }

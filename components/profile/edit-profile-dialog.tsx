@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Loader2, Pencil, X } from 'lucide-react'
 import { useUpdateProfile } from '@/hooks/useUserProfile'
+import { errorMessage } from '@/lib/api'
 import type { UserSummary } from '@/hooks/useUsers'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +20,14 @@ interface EditProfileDialogProps {
   user: UserSummary & { orcidId?: string; publicationsUrl?: string; isPublic?: boolean }
 }
 
+interface ProfileFormValues {
+  bio: string
+  department: string
+  position: string
+  orcidId: string
+  publicationsUrl: string
+}
+
 export function EditProfileDialog({ user }: EditProfileDialogProps) {
   const [open, setOpen]         = useState(false)
   const [interests, setInterests] = useState<string[]>(user.researchInterests ?? [])
@@ -26,7 +35,7 @@ export function EditProfileDialog({ user }: EditProfileDialogProps) {
   const [error, setError]       = useState<string | null>(null)
   const { mutateAsync, isPending } = useUpdateProfile()
 
-  const { register, handleSubmit, formState: { isDirty } } = useForm({
+  const { register, handleSubmit } = useForm<ProfileFormValues>({
     defaultValues: {
       bio:             user.bio ?? '',
       department:      user.department ?? '',
@@ -48,13 +57,13 @@ export function EditProfileDialog({ user }: EditProfileDialogProps) {
     setInterests(interests.filter((x) => x !== i))
   }
 
-  async function onSubmit(data: any) {
+  async function onSubmit(data: ProfileFormValues) {
     setError(null)
     try {
       await mutateAsync({ ...data, researchInterests: interests })
       setOpen(false)
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to update profile')
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to update profile'))
     }
   }
 

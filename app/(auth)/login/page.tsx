@@ -151,7 +151,7 @@ function LoginForm() {
           ← Back to home
         </Link>
         <p className="text-center text-sm text-muted-foreground">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
             href="/register"
             className="font-medium text-primary hover:underline"

@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
 import { User } from '@/lib/db/models/user'
 import { inviteMemberSchema } from '@/lib/validations/project'
+import { canEditProject, isMember, isProjectPi, memberUserId } from '@/lib/projects/membership'
 import { createNotifications } from '@/lib/notifications'
 
 type Params = { params: { id: string } }
@@ -24,12 +25,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
 
     // Only PI or co-PI can invite
-    const canInvite = project.members.some(
-      (m: any) =>
-        m.userId._id?.toString() === session.user.id &&
-        ['pi', 'co-pi'].includes(m.role)
-    )
-    if (!canInvite) {
+    if (!canEditProject(project, session.user.id)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -46,10 +42,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
 
     // Already a member?
-    const alreadyMember = project.members.some(
-      (m: any) => m.userId._id?.toString() === invitee._id.toString()
-    )
-    if (alreadyMember) {
+    if (isMember(project, invitee._id.toString())) {
       return NextResponse.json({ error: 'User is already a member' }, { status: 409 })
     }
 
@@ -97,9 +90,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
-    const isPi = project.members.some(
-      (m: any) => m.userId._id?.toString() === session.user.id && m.role === 'pi'
-    )
+    const isPi = isProjectPi(project, session.user.id)
     const isSelf = targetUserId === session.user.id
 
     // Allow: PI removing anyone, or a member removing themselves
@@ -108,15 +99,12 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     }
 
     // PI cannot remove themselves (transfer ownership first)
-    const targetIsPi = project.members.some(
-      (m: any) => m.userId._id?.toString() === targetUserId && m.role === 'pi'
-    )
-    if (targetIsPi) {
+    if (isProjectPi(project, targetUserId)) {
       return NextResponse.json({ error: 'Transfer PI role before leaving' }, { status: 400 })
     }
 
     project.members = project.members.filter(
-      (m: any) => m.userId._id?.toString() !== targetUserId
+      (m) => memberUserId(m) !== targetUserId
     )
     await project.save()
 

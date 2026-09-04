@@ -21,7 +21,7 @@ export async function createNotifications({
   const notifications = await Notification.insertMany(docs)
 
   // Emit real-time notification to each user via Socket.io
-  const io = (global as any).io
+  const io = global.io
   if (io) {
     notifications.forEach((notification) => {
       io.to(`user:${notification.userId.toString()}`).emit(

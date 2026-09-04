@@ -49,7 +49,7 @@ export default function ProfilePage() {
       <PageContainer>
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <p className="font-display text-lg font-semibold">Profile not found</p>
-          <p className="mt-1 text-sm text-muted-foreground">This profile may be private or doesn't exist.</p>
+          <p className="mt-1 text-sm text-muted-foreground">This profile may be private or doesn&apos;t exist.</p>
           <Button asChild className="mt-6 rounded-xl" variant="outline">
             <Link href="/directory">Back to directory</Link>
           </Button>
@@ -193,7 +193,7 @@ export default function ProfilePage() {
             />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
-              {projects.map((project: any) => (
+              {projects.map((project) => (
                 <Link key={project._id} href={`/projects/${project._id}`}>
                   <Card className="card-interactive h-full border-border/60 shadow-sm">
                     <CardHeader className="pb-3">

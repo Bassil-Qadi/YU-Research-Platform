@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { FolderKanban, MessageSquare, Users, UserCircle, ArrowRight } from 'lucide-react'
+import { FolderKanban, Users, UserCircle, ArrowRight } from 'lucide-react'
 import { useDashboardStats } from '@/hooks/useDashboardStats'
 import { StatCard } from '@/components/layout/stat-card'
 import { Badge } from '@/components/ui/badge'
@@ -94,7 +94,7 @@ export function DashboardStats({ role }: DashboardStatsProps) {
         <Card className="card-interactive border-border/60 shadow-sm lg:col-span-2">
           <CardHeader>
             <CardTitle className="font-display text-base">Your projects</CardTitle>
-            <CardDescription>Recently updated projects you're part of</CardDescription>
+            <CardDescription>Recently updated projects you&apos;re part of</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -106,7 +106,7 @@ export function DashboardStats({ role }: DashboardStatsProps) {
             ) : data?.recentProjects.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-center">
                 <p className="text-sm text-muted-foreground">
-                  You haven't joined any projects yet.
+                  You haven&apos;t joined any projects yet.
                 </p>
                 <Link
                   href="/projects"

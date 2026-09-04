@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from 'mongoose'
+import mongoose, { Schema, Document, Types, type Model } from 'mongoose'
 
 export interface IMessage extends Document {
   projectId: Types.ObjectId
@@ -22,5 +22,7 @@ const MessageSchema = new Schema<IMessage>(
 // Compound index for fetching messages in a project sorted by time
 MessageSchema.index({ projectId: 1, createdAt: -1 })
 
-export default mongoose.models.Message ||
-  mongoose.model<IMessage>('Message', MessageSchema)
+const Message: Model<IMessage> =
+  mongoose.models.Message ?? mongoose.model<IMessage>('Message', MessageSchema)
+
+export default Message

@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 
-import { Plus, Loader2, Calendar, Flag, X } from "lucide-react";
+import { Plus, Loader2, Calendar, X } from "lucide-react";
 import {
   useProjectTasks,
   COLUMNS,

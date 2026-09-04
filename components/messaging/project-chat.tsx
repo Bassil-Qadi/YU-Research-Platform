@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { Send, Loader2 } from 'lucide-react'
 import { useProjectMessages } from '@/hooks/useProjectMessages'
 import { getSocket } from '@/lib/socket-client'
 import { apiFetch } from '@/lib/api'
-import { useQueryClient } from '@tanstack/react-query'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -15,14 +14,13 @@ import { cn } from '@/lib/utils'
 export function ProjectChat({ projectId }: { projectId: string }) {
   const { data: session }   = useSession()
   const { data, isLoading } = useProjectMessages(projectId)
-  const queryClient         = useQueryClient()
   const [content, setContent]       = useState('')
   const [sending, setSending]       = useState(false)
   const [typingUser, setTypingUser] = useState<string | null>(null)
   const bottomRef  = useRef<HTMLDivElement>(null)
   const typingTimer = useRef<ReturnType<typeof setTimeout>>()
 
-  const messages = data?.messages ?? []
+  const messages = useMemo(() => data?.messages ?? [], [data?.messages])
 
   // Scroll to bottom on new messages
   useEffect(() => {
