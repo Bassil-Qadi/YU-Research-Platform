@@ -6,81 +6,75 @@ import bcrypt from "bcryptjs";
 import { loginSchema } from "@/lib/validations/user";
 import { connectDB } from "@/lib/db/connect";
 import { User } from "@/lib/db/models/user";
+import {
+  AccountPendingError,
+  AccountRejectedError,
+  InvalidCredentialsError,
+} from "@/lib/auth/errors";
 import type { UserRole } from "@/types";
 
-const devAuthEnabled =
-  process.env.NODE_ENV === "development" &&
-  process.env.DEV_AUTH_ENABLED !== "false";
+/** Keep in sync with the cost used in /api/auth/register. */
+const BCRYPT_ROUNDS = 12;
 
-async function ensureDevUser(email: string, password: string) {
-  await connectDB();
-  const devEmail =
-    process.env.DEV_USER_EMAIL ?? "demo@university.edu";
-  const devPassword =
-    process.env.DEV_USER_PASSWORD ?? "demo123456";
-
-  if (email !== devEmail || password !== devPassword) {
-    return null;
+/**
+ * Comparing against a real hash when no account matches keeps "unknown email"
+ * and "wrong password" indistinguishable by response time, so the login form
+ * cannot be used to enumerate accounts. Built on first miss, then reused.
+ */
+let placeholderHash: string | null = null;
+function getPlaceholderHash(): string {
+  if (!placeholderHash) {
+    placeholderHash = bcrypt.hashSync("timing-equalisation-placeholder", BCRYPT_ROUNDS);
   }
-
-  let user = await User.findOne({ email: devEmail }).select("+passwordHash");
-
-  if (!user) {
-    const passwordHash = await bcrypt.hash(devPassword, 10);
-    user = await User.create({
-      universityId: "DEV-001",
-      email: devEmail,
-      name: "Demo Researcher",
-      role: "Admin" as UserRole,
-      department: "Computer Science",
-      researchInterests: ["collaboration", "open science"],
-      passwordHash,
-    });
-  }
-
-  return user;
+  return placeholderHash;
 }
 
 export function getAuthProviders(): Provider[] {
-  const providers: Provider[] = [];
+  const providers: Provider[] = [
+    Credentials({
+      id: "credentials",
+      name: "University credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const parsed = loginSchema.safeParse(credentials);
+        if (!parsed.success) throw new InvalidCredentialsError();
 
-  if (devAuthEnabled) {
-    providers.push(
-      Credentials({
-        id: "credentials",
-        name: "Development Login",
-        credentials: {
-          email: { label: "Email", type: "email" },
-          password: { label: "Password", type: "password" },
-        },
-        async authorize(credentials) {
-          const parsed = loginSchema.safeParse(credentials);
-          if (!parsed.success) return null;
+        const email = parsed.data.email.toLowerCase();
 
-          const { email, password } = parsed.data;
-          const user = await ensureDevUser(email, password);
-          if (!user) return null;
+        await connectDB();
+        const user = await User.findOne({ email }).select("+passwordHash");
 
-          if (user.status === 'pending') {
-            throw new Error('PENDING')
-          }
-          if (user.status === 'rejected') {
-            throw new Error('REJECTED')
-          }
+        // No account, or an account created through OAuth that has no password.
+        if (!user?.passwordHash) {
+          await bcrypt.compare(parsed.data.password, getPlaceholderHash());
+          throw new InvalidCredentialsError();
+        }
 
-          return {
-            id: user._id.toString(),
-            email: user.email,
-            name: user.name,
-            image: user.avatar ?? undefined,
-            role: user.role as UserRole,
-            universityId: user.universityId,
-            department: user.department ?? undefined,
-          };
-        },
-      })
-    );
-  }
+        const passwordMatches = await bcrypt.compare(
+          parsed.data.password,
+          user.passwordHash
+        );
+        if (!passwordMatches) throw new InvalidCredentialsError();
+
+        // Only reveal account status once the password has been proven.
+        if (user.status === "pending") throw new AccountPendingError();
+        if (user.status === "rejected") throw new AccountRejectedError();
+
+        return {
+          id: user._id.toString(),
+          email: user.email,
+          name: user.name,
+          image: user.avatar ?? undefined,
+          role: user.role as UserRole,
+          universityId: user.universityId,
+          department: user.department ?? undefined,
+        };
+      },
+    }),
+  ];
 
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     providers.push(

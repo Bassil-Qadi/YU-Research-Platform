@@ -29,6 +29,11 @@ import {
 
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 
+import {
+  AUTH_ERROR_MESSAGES,
+  DEFAULT_AUTH_ERROR_MESSAGE,
+} from "@/lib/auth/errors";
+
 function LoginForm() {
   const router = useRouter();
 
@@ -49,31 +54,6 @@ function LoginForm() {
     setLoading(true);
     setError(null);
 
-    // Pre-check account status before attempting sign in
-    try {
-      const check = await fetch("/api/auth/check-status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const { status } = await check.json();
-
-      if (status === "pending") {
-        setError(
-          "Your account is pending admin approval. You will be notified once approved.",
-        );
-        setLoading(false);
-        return;
-      }
-      if (status === "rejected") {
-        setError(
-          "Your registration was not approved. Please contact the university admin.",
-        );
-        setLoading(false);
-        return;
-      }
-    } catch {}
-
     const result = await signIn("credentials", {
       email,
       password,
@@ -83,7 +63,9 @@ function LoginForm() {
     setLoading(false);
 
     if (result?.error) {
-      setError("Invalid email or password.");
+      setError(
+        AUTH_ERROR_MESSAGES[result.code ?? ""] ?? DEFAULT_AUTH_ERROR_MESSAGE,
+      );
       return;
     }
 
@@ -138,9 +120,12 @@ function LoginForm() {
           />
         </div>
 
-        <p className="rounded-xl border border-border/60 bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
-          Development login: demo@university.edu / demo123456 (see .env.example)
-        </p>
+        {process.env.NODE_ENV !== "production" && (
+          <p className="rounded-xl border border-border/60 bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
+            Development login: run <code>npm run seed</code>, then sign in with
+            the seeded account (see .env.example).
+          </p>
+        )}
       </CardContent>
 
       <CardFooter className="flex flex-col gap-4">

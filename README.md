@@ -51,14 +51,23 @@ University-wide platform for discovering research projects, forming teams, and c
 
 ## Development login
 
-When `NODE_ENV=development` and `DEV_AUTH_ENABLED=true` (default):
+Sign-in never creates accounts. Seed a local admin account first:
+
+```bash
+npm run seed
+```
 
 | Field    | Value                 |
 |----------|-----------------------|
 | Email    | `demo@university.edu` |
 | Password | `demo123456`          |
 
-The demo user is created on first sign-in with the **Admin** role for testing protected routes.
+Override the pair with `DEV_USER_EMAIL` / `DEV_USER_PASSWORD` in `.env.local`. The
+seeded account gets the **Admin** role and `active` status for testing protected
+routes; re-running the script resets its password rather than creating a duplicate.
+
+Everyone else signs up at `/register`, which creates the account with `pending`
+status — an Admin approves it from `/admin` before they can sign in.
 
 ## Scripts
 
@@ -68,6 +77,7 @@ The demo user is created on first sign-in with the **Admin** role for testing pr
 | `npm run build`   | Production build         |
 | `npm run lint`    | ESLint                   |
 | `npm run typecheck` | TypeScript check       |
+| `npm run seed`    | Seed the dev admin user  |
 
 ## Project structure
 
