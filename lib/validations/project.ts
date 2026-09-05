@@ -21,6 +21,30 @@ export const inviteMemberSchema = z.object({
   role: z.enum(['co-pi', 'contributor', 'observer']),
 })
 
+/** A researcher asking to be let onto a project. The role is the reviewer's call. */
+export const createJoinRequestSchema = z.object({
+  message:  z.string().max(1000).trim().optional(),
+  position: z.string().max(200).trim().optional(),
+})
+
+export const reviewJoinRequestSchema = z.discriminatedUnion('status', [
+  z.object({
+    status: z.literal('approved'),
+    role:   z.enum(['co-pi', 'contributor', 'observer']).default('contributor'),
+  }),
+  z.object({
+    status: z.literal('declined'),
+    reason: z.string().max(500).trim().optional(),
+  }),
+])
+
+export const transferPiSchema = z.object({
+  userId: z.string().min(1, 'A member is required'),
+})
+
 export type CreateProjectInput = z.infer<typeof createProjectSchema>
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>
+export type CreateJoinRequestInput = z.infer<typeof createJoinRequestSchema>
+export type ReviewJoinRequestInput = z.infer<typeof reviewJoinRequestSchema>
+export type TransferPiInput = z.infer<typeof transferPiSchema>

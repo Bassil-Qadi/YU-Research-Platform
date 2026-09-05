@@ -1,12 +1,19 @@
 import mongoose, { Schema, Document, Types, type Model } from 'mongoose'
 
-export type NotificationType =
-  | 'project-invite'
-  | 'member-joined'
-  | 'member-left'
-  | 'task-assigned'
-  | 'task-moved'
-  | 'new-message'
+export const NOTIFICATION_TYPES = [
+  'project-invite',
+  'member-joined',
+  'member-left',
+  'task-assigned',
+  'task-moved',
+  'new-message',
+  'join-request',
+  'join-approved',
+  'join-declined',
+  'role-changed',
+] as const
+
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number]
 
 export interface INotification extends Document {
   userId:    Types.ObjectId
@@ -21,11 +28,8 @@ export interface INotification extends Document {
 const NotificationSchema = new Schema<INotification>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    type:   {
-      type: String,
-      enum: ['project-invite', 'member-joined', 'member-left', 'task-assigned', 'task-moved', 'new-message'],
-      required: true,
-    },
+    // Sourced from the same list as the type, so the two cannot drift apart.
+    type:   { type: String, enum: NOTIFICATION_TYPES, required: true },
     title:  { type: String, required: true },
     body:   { type: String, required: true },
     link:   { type: String },

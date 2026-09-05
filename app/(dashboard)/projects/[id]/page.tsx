@@ -9,6 +9,8 @@ import {
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { InviteMemberDialog } from '@/components/projects/invite-member-dialog'
+import { RequestToJoinDialog } from '@/components/projects/request-to-join-dialog'
+import { JoinRequestsPanel } from '@/components/projects/join-requests-panel'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -20,6 +22,10 @@ import {
 } from '@/components/ui/card'
 import { EmptyState } from '@/components/layout/empty-state'
 import { useProject } from '@/hooks/useProject'
+import {
+  useJoinRequests, useMyJoinRequest,
+  useJoinRequestActions, useTransferPi,
+} from '@/hooks/useJoinRequests'
 import { apiFetch, errorMessage } from '@/lib/api'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
@@ -61,6 +67,38 @@ export default function ProjectDetailPage() {
   const isMember  = !!myMembership
   const canManage = ['pi', 'co-pi'].includes(myMembership?.role ?? '')
   const isPi      = myMembership?.role === 'pi'
+
+  // Shares a cache key with the panel below, so this costs no extra request.
+  const { data: requestQueue } = useJoinRequests(id, canManage)
+  const pendingCount = requestQueue?.requests.length ?? 0
+
+  const { data: myRequestData } = useMyJoinRequest(id, !!project && !isMember)
+  const myRequest = myRequestData?.request ?? null
+
+  const { withdraw } = useJoinRequestActions(id)
+  const transferPi   = useTransferPi(id)
+
+  // Matches what the API will accept, so the button never lies.
+  const canRequestToJoin =
+    !!project && !isMember && project.visibility !== 'private' && project.status !== 'completed'
+
+  async function handleWithdraw() {
+    if (!myRequest) return
+    try {
+      await withdraw.mutateAsync(myRequest._id)
+    } catch (err) {
+      alert(errorMessage(err, 'Failed to withdraw your request'))
+    }
+  }
+
+  async function handleTransferPi(userId: string, name: string) {
+    if (!confirm(`Make ${name} the PI? You will become a co-PI.`)) return
+    try {
+      await transferPi.mutateAsync(userId)
+    } catch (err) {
+      alert(errorMessage(err, 'Failed to transfer the PI role'))
+    }
+  }
 
   async function handleLeave() {
     if (!confirm('Leave this project?')) return
@@ -129,6 +167,25 @@ export default function ProjectDetailPage() {
                 Leave project
               </Button>
             )}
+            {canRequestToJoin && (
+              myRequest ? (
+                <div className="flex items-center gap-2">
+                  <Badge className="rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                    Request pending
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    className="rounded-xl"
+                    disabled={withdraw.isPending}
+                    onClick={handleWithdraw}
+                  >
+                    Withdraw
+                  </Button>
+                </div>
+              ) : (
+                <RequestToJoinDialog projectId={id} openPositions={project.openPositions} />
+              )
+            )}
           </div>
         }
       />
@@ -156,6 +213,11 @@ export default function ProjectDetailPage() {
           </TabsTrigger>
           <TabsTrigger value="discussion">Discussion</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
+          {canManage && (
+            <TabsTrigger value="requests">
+              Requests{pendingCount > 0 ? ` (${pendingCount})` : ''}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* ── Overview ── */}
@@ -280,22 +342,33 @@ export default function ProjectDetailPage() {
                           </p>
                         </div>
                       </div>
-                      {/* PI can remove non-PI members */}
+                      {/* PI can hand over the role, and remove non-PI members */}
                       {isPi && member.role !== 'pi' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 rounded-lg text-xs text-muted-foreground hover:text-destructive"
-                          onClick={async () => {
-                            if (!confirm(`Remove ${member.userId.name}?`)) return
-                            try {
-                              await apiFetch(`/api/projects/${id}/members?userId=${member.userId._id}`, { method: 'DELETE' })
-                              queryClient.invalidateQueries({ queryKey: ['project', id] })
-                            } catch (err) { alert(errorMessage(err, 'Failed to remove this member')) }
-                          }}
-                        >
-                          Remove
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 rounded-lg text-xs text-muted-foreground hover:text-foreground"
+                            disabled={transferPi.isPending}
+                            onClick={() => handleTransferPi(member.userId._id, member.userId.name)}
+                          >
+                            Make PI
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 rounded-lg text-xs text-muted-foreground hover:text-destructive"
+                            onClick={async () => {
+                              if (!confirm(`Remove ${member.userId.name}?`)) return
+                              try {
+                                await apiFetch(`/api/projects/${id}/members?userId=${member.userId._id}`, { method: 'DELETE' })
+                                queryClient.invalidateQueries({ queryKey: ['project', id] })
+                              } catch (err) { alert(errorMessage(err, 'Failed to remove this member')) }
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
                       )}
                     </li>
                   )
@@ -304,6 +377,13 @@ export default function ProjectDetailPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* ── Join requests ── */}
+        {canManage && (
+          <TabsContent value="requests">
+            <JoinRequestsPanel projectId={id} canReview={canManage} />
+          </TabsContent>
+        )}
 
         {/* Discission */}
         <TabsContent value="discussion">
