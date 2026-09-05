@@ -29,7 +29,12 @@ export function useConversations() {
 
     // When a new message arrives in any project,
     // update that conversation's last message in the list
-    socket.on('new-message', (message: any) => {
+    const onNewMessage = (message: {
+      projectId:  string
+      content:    string
+      createdAt:  string
+      senderId?:  { name?: string }
+    }) => {
       queryClient.setQueryData(
         ['conversations'],
         (old: { conversations: Conversation[] } | undefined) => {
@@ -51,10 +56,13 @@ export function useConversations() {
           }
         }
       )
-    })
+    }
+    socket.on('new-message', onNewMessage)
 
     return () => {
-      socket.off('new-message')
+      // Detach only this listener — off('new-message') would also drop the one
+      // the open project chat registered on the shared socket.
+      socket.off('new-message', onNewMessage)
     }
   }, [queryClient])
 

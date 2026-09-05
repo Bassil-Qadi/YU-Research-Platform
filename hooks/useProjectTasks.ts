@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
-import { getSocket } from '@/lib/socket-client'
+import { getSocket, joinProjectRoom } from '@/lib/socket-client'
 
 export type TaskStatus   = 'todo' | 'in-progress' | 'in-review' | 'done'
 export type TaskPriority = 'low' | 'medium' | 'high'
@@ -40,17 +40,26 @@ export function useProjectTasks(projectId: string) {
   useEffect(() => {
     if (!projectId) return
     const socket = getSocket()
+    // Task events are broadcast to the project room, so the board has to be in
+    // it. It used to rely on the chat having joined, which stopped happening as
+    // soon as the two moved into separate tabs.
+    const leaveRoom = joinProjectRoom(projectId)
 
-    socket.on('task-created', (task: ITask) => {
+    const onTaskCreated = (task: ITask) => {
+      // The socket can be in several project rooms at once.
+      if (task.projectId !== projectId) return
+
       queryClient.setQueryData(
         ['tasks', projectId],
         (old: { tasks: ITask[] } | undefined) => ({
           tasks: [...(old?.tasks ?? []), task],
         })
       )
-    })
+    }
 
-    socket.on('task-updated', (updated: ITask) => {
+    const onTaskUpdated = (updated: ITask) => {
+      if (updated.projectId !== projectId) return
+
       queryClient.setQueryData(
         ['tasks', projectId],
         (old: { tasks: ITask[] } | undefined) => ({
@@ -59,21 +68,28 @@ export function useProjectTasks(projectId: string) {
           ),
         })
       )
-    })
+    }
 
-    socket.on('task-deleted', ({ taskId }: { taskId: string }) => {
+    const onTaskDeleted = ({ taskId }: { taskId: string }) => {
       queryClient.setQueryData(
         ['tasks', projectId],
         (old: { tasks: ITask[] } | undefined) => ({
           tasks: (old?.tasks ?? []).filter((t) => t._id !== taskId),
         })
       )
-    })
+    }
+
+    socket.on('task-created', onTaskCreated)
+    socket.on('task-updated', onTaskUpdated)
+    socket.on('task-deleted', onTaskDeleted)
 
     return () => {
-      socket.off('task-created')
-      socket.off('task-updated')
-      socket.off('task-deleted')
+      leaveRoom()
+      // Detach only these listeners — off(event) would also drop the ones
+      // other hooks registered on the shared socket.
+      socket.off('task-created', onTaskCreated)
+      socket.off('task-updated', onTaskUpdated)
+      socket.off('task-deleted', onTaskDeleted)
     }
   }, [projectId, queryClient])
 

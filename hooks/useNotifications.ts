@@ -34,10 +34,7 @@ export function useNotifications() {
     if (!session?.user?.id) return
     const socket = getSocket()
 
-    // Join personal room for real-time notifications
-    socket.emit('join-user-room', session.user.id)
-
-    socket.on('new-notification', (notification: INotification) => {
+    const onNewNotification = (notification: INotification) => {
       queryClient.setQueryData(
         ['notifications'],
         (old: NotificationsResponse | undefined) => ({
@@ -45,10 +42,11 @@ export function useNotifications() {
           unreadCount:   (old?.unreadCount ?? 0) + 1,
         })
       )
-    })
+    }
+    socket.on('new-notification', onNewNotification)
 
     return () => {
-      socket.off('new-notification')
+      socket.off('new-notification', onNewNotification)
     }
   }, [session?.user?.id, queryClient])
 

@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
-import { getSocket } from '@/lib/socket-client'
+import { getSocket, joinProjectRoom } from '@/lib/socket-client'
 
 export interface IMessagePopulated {
   _id:       string
@@ -28,22 +28,27 @@ export function useProjectMessages(projectId: string) {
   useEffect(() => {
     if (!projectId) return
     const socket = getSocket()
-
-    socket.emit('join-project', projectId)
+    const leaveRoom = joinProjectRoom(projectId)
 
     // When a new message arrives via socket, append it to the cache
-    socket.on('new-message', (message: IMessagePopulated) => {
+    const onNewMessage = (message: IMessagePopulated) => {
+      // The socket can be in several project rooms at once.
+      if (message.projectId !== projectId) return
+
       queryClient.setQueryData(
         ['messages', projectId],
         (old: { messages: IMessagePopulated[] } | undefined) => ({
           messages: [...(old?.messages ?? []), message],
         })
       )
-    })
+    }
+    socket.on('new-message', onNewMessage)
 
     return () => {
-      socket.emit('leave-project', projectId)
-      socket.off('new-message')
+      leaveRoom()
+      // Detach only this listener — off('new-message') would also drop the
+      // ones other hooks registered on the shared socket.
+      socket.off('new-message', onNewMessage)
     }
   }, [projectId, queryClient])
 
