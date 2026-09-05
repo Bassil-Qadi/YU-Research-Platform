@@ -115,6 +115,7 @@ export default function DirectoryPage() {
                 title={`${user.position ?? user.role}${user.department ? `, ${user.department}` : ''}`}
                 department={user.department ?? ''}
                 interests={user.researchInterests ?? []}
+                avatarUrl={user.avatarUrl}
               />
             ))}
           </div>

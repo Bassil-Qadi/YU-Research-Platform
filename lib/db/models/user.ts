@@ -10,6 +10,8 @@ const userSchema = new Schema(
     position:          { type: String },  // 'Professor', 'PhD Student', etc.
     publicationsUrl:   { type: String },
     avatarUrl:         { type: String },
+    /** Cloudinary public id, kept so the old image can be deleted on replace. */
+    avatarPublicId:    { type: String },
     isPublic:          { type: Boolean, default: true },
     universityId: { type: String, required: true, unique: true, index: true },
     email: { type: String, required: true, unique: true, lowercase: true },

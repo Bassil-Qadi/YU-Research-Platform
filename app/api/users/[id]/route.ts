@@ -37,8 +37,9 @@ export async function GET(_req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Private profiles only visible to themselves
-    if (!user.isPublic && userId !== session.user.id) {
+    // Private profiles only visible to themselves. Explicitly false, so a
+    // user document without the field is treated as public, as the schema says.
+    if (user.isPublic === false && userId !== session.user.id) {
       return NextResponse.json({ error: 'This profile is private' }, { status: 403 })
     }
 

@@ -4,7 +4,7 @@ import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { LogOut, Settings, User } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,13 +19,6 @@ import { Badge } from "@/components/ui/badge";
 
 export function UserNav() {
   const { user } = useUser();
-  const initials =
-    user?.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() ?? "?";
 
   return (
     <DropdownMenu>
@@ -35,11 +28,12 @@ export function UserNav() {
           className="relative h-9 gap-2 rounded-full px-2 md:pr-3"
           aria-label="Open user menu"
         >
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar
+            name={user?.name ?? "?"}
+            src={user?.image}
+            className="h-8 w-8"
+            fallbackClassName="from-blue-600 to-violet-600"
+          />
           <span className="hidden max-w-[120px] truncate text-sm font-medium md:inline">
             {user?.name?.split(" ")[0] ?? "Account"}
           </span>

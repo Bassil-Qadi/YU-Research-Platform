@@ -1,0 +1,44 @@
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { cn } from '@/lib/utils'
+
+export function initialsOf(name: string): string {
+  return name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+}
+
+interface UserAvatarProps {
+  name: string
+  src?: string | null
+  /** Tailwind classes for the gradient shown when there is no image. */
+  fallbackClassName?: string
+  className?: string
+}
+
+/**
+ * A person's avatar: their uploaded picture when they have one, their initials
+ * otherwise. Radix falls back on its own if the image fails to load.
+ */
+export function UserAvatar({
+  name,
+  src,
+  fallbackClassName,
+  className,
+}: UserAvatarProps) {
+  return (
+    <Avatar className={className}>
+      {src && <AvatarImage src={src} alt={name} />}
+      <AvatarFallback
+        className={cn(
+          'bg-gradient-to-br text-xs font-semibold text-white',
+          fallbackClassName ?? 'from-blue-500 to-indigo-600'
+        )}
+      >
+        {initialsOf(name)}
+      </AvatarFallback>
+    </Avatar>
+  )
+}

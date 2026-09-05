@@ -20,7 +20,9 @@ export async function GET(req: NextRequest) {
     const page       = parseInt(searchParams.get('page') ?? '1')
     const limit      = Math.min(parseInt(searchParams.get('limit') ?? '12'), 50)
 
-    const filter: FilterQuery<IUser> = { isPublic: true }
+    // $ne: false rather than true — a missing field means the schema default,
+    // which is public. Matching on true hides legacy user documents.
+    const filter: FilterQuery<IUser> = { isPublic: { $ne: false } }
 
     if (department) filter.department = department
     if (role)       filter.role = role

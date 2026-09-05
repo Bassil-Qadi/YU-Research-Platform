@@ -38,6 +38,7 @@ async function main() {
         passwordHash,
         status: "active",
         role: "Admin",
+        isPublic: true,
       },
       $setOnInsert: {
         email,
@@ -46,7 +47,6 @@ async function main() {
         department: "Computer Science",
         position: "Professor",
         researchInterests: ["collaboration", "open science"],
-        isPublic: true,
       },
     },
     { new: true, upsert: true, setDefaultsOnInsert: true }

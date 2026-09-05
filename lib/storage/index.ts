@@ -1,23 +1,166 @@
+import { v2 as cloudinary, type UploadApiResponse } from 'cloudinary'
+
 /**
- * S3 / R2 file storage — Phase 3+
+ * Cloudinary-backed file storage.
+ *
+ * Configuration is read lazily so that importing this module never throws —
+ * routes call isStorageConfigured() and return a clear 503 instead.
  */
+
+export type StorageResourceType = 'image' | 'raw'
+
 export interface UploadResult {
-  key: string;
-  url: string;
+  publicId:     string
+  url:          string
+  bytes:        number
+  format?:      string
+  resourceType: StorageResourceType
+}
+
+export interface UploadOptions {
+  /** Folder within the Cloudinary account, e.g. 'research-platform/avatars'. */
+  folder:        string
+  /** Original filename; used for the stored name and the download filename. */
+  filename:      string
+  resourceType?: StorageResourceType
+}
+
+/** Ceiling that matches Cloudinary's free tier for both images and raw files. */
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+
+export const ALLOWED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+]
+
+export const ALLOWED_DOCUMENT_TYPES = [
+  'application/pdf',
+  'text/plain',
+  'text/csv',
+  'text/markdown',
+  'application/json',
+  'application/zip',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+]
+
+export function isStorageConfigured(): boolean {
+  // cloudinary://<api_key>:<api_secret>@<cloud_name>
+  if (process.env.CLOUDINARY_URL) return true
+
+  return Boolean(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+  )
+}
+
+let configured = false
+
+function configure() {
+  if (configured) return
+
+  if (!isStorageConfigured()) {
+    throw new Error(
+      'File storage is not configured. Set CLOUDINARY_URL, or ' +
+      'CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.'
+    )
+  }
+
+  if (process.env.CLOUDINARY_URL) {
+    // The SDK parses CLOUDINARY_URL out of the environment itself.
+    cloudinary.config({ secure: true })
+  } else {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key:    process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+      secure:     true,
+    })
+  }
+
+  configured = true
+}
+
+/** Strip anything that would be awkward in a URL or a stored public id. */
+function sanitiseFilename(filename: string): string {
+  const base = filename.replace(/\.[^.]+$/, '')
+  return base
+    .normalize('NFKD')
+    .replace(/[^a-zA-Z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'file'
 }
 
 export async function uploadFile(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _file: Buffer,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _key: string
+  file: Buffer,
+  { folder, filename, resourceType = 'image' }: UploadOptions
 ): Promise<UploadResult> {
-  throw new Error("File uploads are not implemented yet (Phase 3)");
+  configure()
+
+  const response = await new Promise<UploadApiResponse>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type:   resourceType,
+        public_id:       `${Date.now()}-${sanitiseFilename(filename)}`,
+        use_filename:    false,
+        unique_filename: false,
+        overwrite:       false,
+      },
+      (error, result) => {
+        if (error) return reject(error)
+        if (!result) return reject(new Error('Upload returned no result'))
+        resolve(result)
+      }
+    )
+
+    stream.end(file)
+  })
+
+  return {
+    publicId:     response.public_id,
+    url:          response.secure_url,
+    bytes:        response.bytes,
+    format:       response.format,
+    resourceType,
+  }
 }
 
-export async function getSignedUrl(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _key: string
-): Promise<string> {
-  throw new Error("Signed URLs are not implemented yet (Phase 3)");
+/**
+ * Remove a stored file. Deliberately forgiving: a file that is already gone
+ * should not stop the caller from deleting the record that points at it.
+ */
+export async function deleteFile(
+  publicId: string,
+  resourceType: StorageResourceType = 'image'
+): Promise<void> {
+  if (!isStorageConfigured()) return
+
+  try {
+    configure()
+    await cloudinary.uploader.destroy(publicId, { resource_type: resourceType })
+  } catch (err) {
+    console.error('[storage] failed to delete', publicId, err)
+  }
+}
+
+/** A resized, face-cropped variant of an uploaded avatar. */
+export function avatarUrl(publicId: string, size = 200): string {
+  if (!isStorageConfigured()) return ''
+  configure()
+
+  return cloudinary.url(publicId, {
+    secure:         true,
+    transformation: [
+      { width: size, height: size, crop: 'fill', gravity: 'face' },
+      { quality: 'auto', fetch_format: 'auto' },
+    ],
+  })
 }

@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,7 @@ export interface ResearcherCardProps {
   title: string;
   department: string;
   interests?: string[];
+  avatarUrl?: string;
   avatarGradient?: string;
   className?: string;
 }
@@ -38,16 +39,10 @@ export function ResearcherCard({
   title,
   department,
   interests = [],
+  avatarUrl,
   avatarGradient,
   className,
 }: ResearcherCardProps) {
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
   const gradient =
     avatarGradient ??
     avatarGradients[
@@ -64,16 +59,12 @@ export function ResearcherCard({
     >
       <CardHeader className="pb-3">
         <div className="flex items-start gap-3">
-          <Avatar className="h-12 w-12 ring-2 ring-background transition-transform duration-300 group-hover:scale-105">
-            <AvatarFallback
-              className={cn(
-                "bg-gradient-to-br text-sm font-semibold text-white",
-                gradient
-              )}
-            >
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar
+            name={name}
+            src={avatarUrl}
+            className="h-12 w-12 ring-2 ring-background transition-transform duration-300 group-hover:scale-105"
+            fallbackClassName={cn("text-sm", gradient)}
+          />
           <div className="min-w-0 flex-1">
             <CardTitle className="text-base">
               <Link

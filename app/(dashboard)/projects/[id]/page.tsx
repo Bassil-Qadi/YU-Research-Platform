@@ -11,6 +11,8 @@ import { PageHeader } from '@/components/layout/page-header'
 import { InviteMemberDialog } from '@/components/projects/invite-member-dialog'
 import { RequestToJoinDialog } from '@/components/projects/request-to-join-dialog'
 import { JoinRequestsPanel } from '@/components/projects/join-requests-panel'
+import { ProjectFiles } from '@/components/projects/project-files'
+import { UserAvatar } from '@/components/ui/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -213,6 +215,7 @@ export default function ProjectDetailPage() {
           </TabsTrigger>
           <TabsTrigger value="discussion">Discussion</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
+          {isMember && <TabsTrigger value="files">Files</TabsTrigger>}
           {canManage && (
             <TabsTrigger value="requests">
               Requests{pendingCount > 0 ? ` (${pendingCount})` : ''}
@@ -322,16 +325,16 @@ export default function ProjectDetailPage() {
             <CardContent>
               <ul className="divide-y divide-border/60">
                 {project.members.map((member) => {
-                  const initials = member.userId.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
                   const isCurrentUser = member.userId._id === session?.user?.id
                   return (
                     <li key={member.userId._id} className="flex items-center justify-between gap-3 py-3.5 first:pt-0 last:pb-0">
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className={cn('bg-gradient-to-br text-xs font-semibold text-white', ROLE_GRADIENTS[member.role])}>
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
+                        <UserAvatar
+                          name={member.userId.name}
+                          src={member.userId.avatarUrl}
+                          className="h-10 w-10"
+                          fallbackClassName={ROLE_GRADIENTS[member.role]}
+                        />
                         <div>
                           <p className="text-sm font-medium">
                             {member.userId.name}
@@ -377,6 +380,13 @@ export default function ProjectDetailPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* ── Files ── */}
+        {isMember && (
+          <TabsContent value="files">
+            <ProjectFiles projectId={id} isMember={isMember} canManage={canManage} />
+          </TabsContent>
+        )}
 
         {/* ── Join requests ── */}
         {canManage && (

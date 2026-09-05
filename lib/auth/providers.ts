@@ -67,7 +67,7 @@ export function getAuthProviders(): Provider[] {
           id: user._id.toString(),
           email: user.email,
           name: user.name,
-          image: user.avatar ?? undefined,
+          image: user.avatarUrl ?? user.avatar ?? undefined,
           role: user.role as UserRole,
           universityId: user.universityId,
           department: user.department ?? undefined,

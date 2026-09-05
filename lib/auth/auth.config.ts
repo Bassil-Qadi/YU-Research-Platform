@@ -26,13 +26,19 @@ export const authConfig = {
       if (isProtected) return isLoggedIn;
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = user.role as UserRole | undefined;
         token.universityId = user.universityId;
         token.department = user.department;
       }
+
+      // update({ image }) after an avatar upload or removal.
+      if (trigger === 'update' && session && 'image' in session) {
+        token.picture = (session as { image?: string | null }).image ?? null;
+      }
+
       return token;
     },
     async session({ session, token }) {

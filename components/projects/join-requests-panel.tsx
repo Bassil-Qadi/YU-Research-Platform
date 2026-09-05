@@ -8,7 +8,7 @@ import {
   useJoinRequests, useJoinRequestActions,
   type JoinRequest, type MemberRole,
 } from '@/hooks/useJoinRequests'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/ui/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -20,10 +20,6 @@ import {
   SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { EmptyState } from '@/components/layout/empty-state'
-
-function initialsOf(name: string) {
-  return name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
-}
 
 function RequestRow({
   projectId,
@@ -56,11 +52,11 @@ function RequestRow({
   return (
     <li className="space-y-3 py-4 first:pt-0 last:pb-0">
       <div className="flex items-start gap-3">
-        <Avatar className="h-10 w-10">
-          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-semibold text-white">
-            {initialsOf(request.userId.name)}
-          </AvatarFallback>
-        </Avatar>
+        <UserAvatar
+          name={request.userId.name}
+          src={request.userId.avatarUrl}
+          className="h-10 w-10"
+        />
 
         <div className="min-w-0 flex-1">
           <Link

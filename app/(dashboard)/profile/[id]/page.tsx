@@ -9,7 +9,8 @@ import {
 } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { EditProfileDialog } from '@/components/profile/edit-profile-dialog'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { AvatarUpload } from '@/components/profile/avatar-upload'
+import { UserAvatar } from '@/components/ui/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -59,7 +60,6 @@ export default function ProfilePage() {
   }
 
   const { user, projects } = data
-  const initials = user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
   return (
     <PageContainer className="space-y-6">
@@ -72,11 +72,12 @@ export default function ProfilePage() {
         <div className="relative px-6 pb-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-              <Avatar className="-mt-12 h-24 w-24 border-4 border-card shadow-lg md:-mt-14 md:h-28 md:w-28">
-                <AvatarFallback className="bg-gradient-to-br from-rose-500 to-violet-600 text-2xl font-bold text-white">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar
+                name={user.name}
+                src={user.avatarUrl}
+                className="-mt-12 h-24 w-24 border-4 border-card shadow-lg md:-mt-14 md:h-28 md:w-28"
+                fallbackClassName="from-rose-500 to-violet-600 text-2xl font-bold"
+              />
               <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
@@ -95,6 +96,12 @@ export default function ProfilePage() {
             </div>
             {isMe && <EditProfileDialog user={user} />}
           </div>
+
+          {isMe && (
+            <div className="mt-6 border-t border-border/60 pt-6">
+              <AvatarUpload name={user.name} avatarUrl={user.avatarUrl} />
+            </div>
+          )}
 
           <div className="mt-6 flex flex-wrap gap-4 text-sm text-muted-foreground">
             {user.email && (
