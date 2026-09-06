@@ -30,6 +30,7 @@
     "cloudinary": "^2.11.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "ioredis": "^6.0.0",
     "lucide-react": "^0.511.0",
     "mongodb": "^6.16.0",
     "mongoose": "^8.15.1",

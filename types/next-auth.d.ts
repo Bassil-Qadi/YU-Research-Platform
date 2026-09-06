@@ -27,5 +27,7 @@ declare module "next-auth/jwt" {
     role?: UserRole;
     universityId?: string;
     department?: string;
+    /** Epoch ms of the last database revalidation. */
+    checkedAt?: number;
   }
 }

@@ -3,6 +3,11 @@ import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
 import { updateProjectSchema } from '@/lib/validations/project'
+import Task from '@/lib/db/models/Task'
+import Message from '@/lib/db/models/Message'
+import JoinRequest from '@/lib/db/models/JoinRequest'
+import ProjectFile from '@/lib/db/models/ProjectFile'
+import { deleteFile } from '@/lib/storage'
 import { canEditProject, isMember, isProjectPi } from '@/lib/projects/membership'
 import mongoose from 'mongoose'
 
@@ -103,7 +108,24 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Only the PI can delete a project' }, { status: 403 })
     }
 
+    // Everything hanging off the project goes with it; otherwise the tasks,
+    // messages, requests and uploaded files outlive it as unreachable rows.
+    const files = await ProjectFile.find({ projectId: params.id })
+      .select('publicId resourceType')
+      .lean()
+
+    await Promise.all([
+      Task.deleteMany({ projectId: params.id }),
+      Message.deleteMany({ projectId: params.id }),
+      JoinRequest.deleteMany({ projectId: params.id }),
+      ProjectFile.deleteMany({ projectId: params.id }),
+    ])
+
     await Project.findByIdAndDelete(params.id)
+
+    // Storage last: a leftover blob is recoverable, a dangling record is not.
+    await Promise.all(files.map((f) => deleteFile(f.publicId, f.resourceType)))
+
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[DELETE /api/projects/[id]]', err)

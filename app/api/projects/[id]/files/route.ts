@@ -10,6 +10,7 @@ import {
   isStorageConfigured, uploadFile,
 } from '@/lib/storage'
 import { readUploadedFile } from '@/lib/storage/upload-request'
+import { RATE_LIMITS, rateLimit, rateLimitHeaders } from '@/lib/rate-limit'
 
 type Params = { params: { id: string } }
 
@@ -68,6 +69,14 @@ export async function POST(req: NextRequest, { params }: Params) {
     // not that the server happens to be misconfigured.
     if (!(await memberOf(params.id, session.user.id))) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const verdict = await rateLimit(`upload:${session.user.id}`, RATE_LIMITS.upload)
+    if (!verdict.allowed) {
+      return NextResponse.json(
+        { error: 'Too many uploads. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(verdict) }
+      )
     }
 
     if (!isStorageConfigured()) {

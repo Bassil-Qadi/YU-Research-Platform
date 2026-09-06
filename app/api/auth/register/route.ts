@@ -4,6 +4,7 @@ import { User } from '@/lib/db/models/user'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { sendEmail } from '@/lib/email/client'
+import { RATE_LIMITS, clientIp, rateLimit, rateLimitHeaders } from '@/lib/rate-limit'
 import { registrationReceived, registrationPendingForAdmins } from '@/lib/email/templates'
 
 const registerSchema = z.object({
@@ -17,6 +18,16 @@ const registerSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // Anyone can reach this, and each call writes a user and sends mail to the
+    // applicant and every admin — so it is throttled before any of that.
+    const verdict = await rateLimit(`register:${clientIp(req)}`, RATE_LIMITS.register)
+    if (!verdict.allowed) {
+      return NextResponse.json(
+        { error: 'Too many registration attempts. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(verdict) }
+      )
+    }
+
     await connectDB()
 
     const body   = await req.json()

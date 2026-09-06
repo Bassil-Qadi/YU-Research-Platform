@@ -10,6 +10,7 @@ import { createNotifications } from '@/lib/notifications'
 import { User } from '@/lib/db/models/user'
 import { sendEmail } from '@/lib/email/client'
 import { joinRequestReceived } from '@/lib/email/templates'
+import { RATE_LIMITS, rateLimit, rateLimitHeaders } from '@/lib/rate-limit'
 
 type Params = { params: { id: string } }
 
@@ -94,6 +95,15 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
     if (isMember(project, session.user.id)) {
       return NextResponse.json({ error: 'You are already a member' }, { status: 409 })
+    }
+
+    // Each accepted request mails every PI and co-PI.
+    const verdict = await rateLimit(`join-request:${session.user.id}`, RATE_LIMITS.joinRequest)
+    if (!verdict.allowed) {
+      return NextResponse.json(
+        { error: 'Too many join requests. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(verdict) }
+      )
     }
 
     const body   = await req.json().catch(() => ({}))

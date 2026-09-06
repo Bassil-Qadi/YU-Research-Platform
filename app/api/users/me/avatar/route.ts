@@ -7,6 +7,7 @@ import {
   isStorageConfigured, uploadFile,
 } from '@/lib/storage'
 import { readUploadedFile } from '@/lib/storage/upload-request'
+import { RATE_LIMITS, rateLimit, rateLimitHeaders } from '@/lib/rate-limit'
 
 /** Avatars are displayed small; no need to accept the full 10MB. */
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024
@@ -17,6 +18,14 @@ export async function POST(req: NextRequest) {
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const verdict = await rateLimit(`upload:${session.user.id}`, RATE_LIMITS.upload)
+    if (!verdict.allowed) {
+      return NextResponse.json(
+        { error: 'Too many uploads. Please try again later.' },
+        { status: 429, headers: rateLimitHeaders(verdict) }
+      )
     }
 
     if (!isStorageConfigured()) {
