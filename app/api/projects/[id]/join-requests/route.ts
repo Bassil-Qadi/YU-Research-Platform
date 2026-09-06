@@ -7,6 +7,9 @@ import JoinRequest from '@/lib/db/models/JoinRequest'
 import { createJoinRequestSchema } from '@/lib/validations/project'
 import { canEditProject, isMember, memberUserId } from '@/lib/projects/membership'
 import { createNotifications } from '@/lib/notifications'
+import { User } from '@/lib/db/models/user'
+import { sendEmail } from '@/lib/email/client'
+import { joinRequestReceived } from '@/lib/email/templates'
 
 type Params = { params: { id: string } }
 
@@ -131,6 +134,20 @@ export async function POST(req: NextRequest, { params }: Params) {
       body:    `${session.user.name ?? 'A researcher'} asked to join "${project.title}".`,
       link:    `/projects/${params.id}`,
     })
+
+    const reviewerEmails = (
+      await User.find({ _id: { $in: reviewers } }).select('email').lean()
+    ).map((u) => u.email).filter(Boolean)
+
+    if (reviewerEmails.length > 0) {
+      const mail = joinRequestReceived(
+        session.user.name ?? 'A researcher',
+        project.title,
+        params.id,
+        parsed.data.message
+      )
+      await sendEmail({ to: reviewerEmails, ...mail })
+    }
 
     return NextResponse.json(request, { status: 201 })
   } catch (err) {

@@ -3,6 +3,8 @@ import { connectDB } from '@/lib/db/connect'
 import { User } from '@/lib/db/models/user'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
+import { sendEmail } from '@/lib/email/client'
+import { registrationReceived, registrationPendingForAdmins } from '@/lib/email/templates'
 
 const registerSchema = z.object({
   name:       z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -50,6 +52,21 @@ export async function POST(req: NextRequest) {
       isPublic:   true,
       status:     'pending',
     })
+
+    // Best-effort: the account exists either way, so a mail failure must not
+    // turn a successful registration into an error.
+    const applicantMail = registrationReceived(name)
+    await sendEmail({ to: email.toLowerCase(), ...applicantMail })
+
+    const admins = await User.find({ role: 'Admin', status: 'active' })
+      .select('email')
+      .lean()
+    const adminEmails = admins.map((a) => a.email).filter(Boolean)
+
+    if (adminEmails.length > 0) {
+      const adminMail = registrationPendingForAdmins(name, email.toLowerCase(), department, role)
+      await sendEmail({ to: adminEmails, ...adminMail })
+    }
 
     return NextResponse.json(
       { message: 'Registration submitted. Await admin approval.' },

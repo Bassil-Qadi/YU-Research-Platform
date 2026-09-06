@@ -3,6 +3,8 @@ import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
 import { User } from '@/lib/db/models/user'
 import { z } from 'zod'
+import { sendEmail } from '@/lib/email/client'
+import { registrationApproved, registrationRejected } from '@/lib/email/templates'
 
 type Params = { params: { id: string } }
 
@@ -35,6 +37,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
+
+    // The registration flow tells people they will hear back; this is that.
+    const mail = parsed.data.status === 'active'
+      ? registrationApproved(user.name)
+      : registrationRejected(user.name, parsed.data.rejectionReason)
+
+    await sendEmail({ to: user.email, ...mail })
 
     return NextResponse.json(user)
   } catch (err) {

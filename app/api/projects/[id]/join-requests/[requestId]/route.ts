@@ -7,6 +7,9 @@ import JoinRequest from '@/lib/db/models/JoinRequest'
 import { reviewJoinRequestSchema } from '@/lib/validations/project'
 import { canEditProject, isMember, memberUserId } from '@/lib/projects/membership'
 import { createNotifications } from '@/lib/notifications'
+import { User } from '@/lib/db/models/user'
+import { sendEmail } from '@/lib/email/client'
+import { joinRequestApproved, joinRequestDeclined } from '@/lib/email/templates'
 
 type Params = { params: { id: string; requestId: string } }
 
@@ -56,6 +59,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     const applicantId = request.userId.toString()
+    const applicant = await User.findById(applicantId).select('email name').lean()
 
     if (parsed.data.status === 'declined') {
       request.status        = 'declined'
@@ -73,6 +77,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
           : `Your request to join "${project.title}" was declined.`,
         link: `/projects/${params.id}`,
       })
+
+      if (applicant?.email) {
+        await sendEmail({
+          to: applicant.email,
+          ...joinRequestDeclined(project.title, parsed.data.reason),
+        })
+      }
 
       return NextResponse.json(request)
     }
@@ -116,6 +127,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       body:    `Someone new joined "${project.title}".`,
       link:    `/projects/${params.id}`,
     })
+
+    if (applicant?.email) {
+      await sendEmail({
+        to: applicant.email,
+        ...joinRequestApproved(project.title, params.id, parsed.data.role),
+      })
+    }
 
     return NextResponse.json(request)
   } catch (err) {

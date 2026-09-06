@@ -6,6 +6,8 @@ import { User } from '@/lib/db/models/user'
 import { inviteMemberSchema } from '@/lib/validations/project'
 import { canEditProject, isMember, isProjectPi, memberUserId } from '@/lib/projects/membership'
 import { createNotifications } from '@/lib/notifications'
+import { sendEmail } from '@/lib/email/client'
+import { projectInvitation } from '@/lib/email/templates'
 
 type Params = { params: { id: string } }
 
@@ -19,7 +21,9 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     await connectDB()
 
-    const project = await Project.findById(params.id).populate('members.userId', '_id')
+    const project = await Project.findById(params.id)
+      .select('title members')
+      .populate('members.userId', '_id')
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
@@ -53,7 +57,6 @@ export async function POST(req: NextRequest, { params }: Params) {
     })
     await project.save()
 
-    // TODO: send email notification here (Resend / SES)
     await createNotifications({
       userIds: [invitee._id],
       type:    'project-invite',
@@ -61,6 +64,14 @@ export async function POST(req: NextRequest, { params }: Params) {
       body:    `You've been added to a project as ${parsed.data.role}.`,
       link:    `/projects/${params.id}`,
     })
+
+    const mail = projectInvitation(
+      session.user.name ?? 'A colleague',
+      project.title,
+      params.id,
+      parsed.data.role
+    )
+    await sendEmail({ to: invitee.email, ...mail })
 
     return NextResponse.json({ success: true, memberId: invitee._id })
   } catch (err) {
