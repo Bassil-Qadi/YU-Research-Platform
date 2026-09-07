@@ -77,6 +77,8 @@ status — an Admin approves it from `/admin` before they can sign in.
 | `npm run build`   | Production build         |
 | `npm run lint`    | ESLint                   |
 | `npm run typecheck` | TypeScript check       |
+| `npm test`        | Run the test suite       |
+| `npm run test:watch` | Tests in watch mode   |
 | `npm run seed`    | Seed the dev admin user  |
 
 ## Project structure
@@ -95,6 +97,23 @@ lib/validations/         # Zod schemas
 hooks/ store/ types/     # Shared client utilities
 middleware.ts            # Auth & RBAC route protection
 ```
+
+## Tests
+
+```bash
+npm test
+```
+
+Unit tests cover the pure logic — rate limiting, project membership, the role
+hierarchy, upload validation and email templates. Integration tests call the
+route handlers directly against a real MongoDB started in memory, so schema
+defaults, validators and indexes behave as they do in production; only
+`auth()` is mocked, to choose who is calling.
+
+No test touches the network: the Cloudinary and Resend variables are cleared
+before the suite runs, so the code paths that guard on them are exercised
+rather than skipped. The first run downloads a MongoDB binary and is slower
+than later ones.
 
 ## CI
 

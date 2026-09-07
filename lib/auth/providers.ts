@@ -41,17 +41,22 @@ export function getAuthProviders(): Provider[] {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials, request) {
+        // Counted before validation, so a flood of malformed payloads is
+        // throttled too rather than short-circuiting past the limiter.
+        const ip = request instanceof Request ? clientIp(request) : "unknown";
+        if (!(await rateLimit(`login:ip:${ip}`, RATE_LIMITS.login)).allowed) {
+          throw new TooManyAttemptsError();
+        }
+
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) throw new InvalidCredentialsError();
 
         const email = parsed.data.email.toLowerCase();
 
-        // Throttle by address and by origin: the first slows an attack on one
-        // account, the second slows one attacker working through many.
-        const ip = request instanceof Request ? clientIp(request) : "unknown";
-        for (const key of [`login:email:${email}`, `login:ip:${ip}`]) {
-          const verdict = await rateLimit(key, RATE_LIMITS.login);
-          if (!verdict.allowed) throw new TooManyAttemptsError();
+        // And again per address, so one account cannot be ground down from
+        // many different origins.
+        if (!(await rateLimit(`login:email:${email}`, RATE_LIMITS.login)).allowed) {
+          throw new TooManyAttemptsError();
         }
 
         await connectDB();

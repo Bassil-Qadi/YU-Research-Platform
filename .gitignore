@@ -34,3 +34,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# mongodb-memory-server downloads a server binary for the test suite
+.cache/
+node_modules/.cache/
