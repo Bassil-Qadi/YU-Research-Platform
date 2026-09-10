@@ -52,7 +52,7 @@ export function AppHeader() {
               </Button> */}
               <NotificationBell />
             </TooltipTrigger>
-            <TooltipContent>Notifications — Phase 2</TooltipContent>
+            <TooltipContent>Notifications</TooltipContent>
           </Tooltip>
 
           <ThemeToggle />

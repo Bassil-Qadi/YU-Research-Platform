@@ -13,7 +13,10 @@ const userSchema = new Schema(
     /** Cloudinary public id, kept so the old image can be deleted on replace. */
     avatarPublicId:    { type: String },
     isPublic:          { type: Boolean, default: true },
-    universityId: { type: String, required: true, unique: true, index: true },
+    // Sparse: MongoDBAdapter creates OAuth accounts without this field, and a
+    // non-sparse unique index treats every one of them as a duplicate null.
+    // Run `npm run sync-indexes` after changing this on an existing database.
+    universityId: { type: String, required: true, unique: true, sparse: true, index: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     name: { type: String, required: true },
     status: {

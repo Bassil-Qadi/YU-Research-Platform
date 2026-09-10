@@ -41,11 +41,20 @@ function LoginForm() {
 
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
 
+  // An OAuth denial comes back as a redirect, not as a signIn() result.
+  const oauthError = searchParams.get("error");
+
   const [email, setEmail] = useState("");
 
   const [password, setPassword] = useState("");
 
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    oauthError === "AccessDenied"
+      ? "Your account is awaiting administrator approval."
+      : oauthError
+        ? DEFAULT_AUTH_ERROR_MESSAGE
+        : null,
+  );
 
   const [loading, setLoading] = useState(false);
 

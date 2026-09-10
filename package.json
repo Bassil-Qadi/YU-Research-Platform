@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "seed": "tsx scripts/seed-dev-user.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "sync-indexes": "tsx scripts/sync-indexes.ts"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.1",

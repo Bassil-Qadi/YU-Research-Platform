@@ -8,6 +8,15 @@ const { auth } = NextAuth(authConfig);
 
 const publicPaths = ["/", "/login", "/register"];
 
+/**
+ * An API caller wants a status code it can act on, not a login page. Sending
+ * every unauthenticated request to /login made the routes' own JSON errors
+ * unreachable: fetch follows the redirect and hands back HTML with a 200.
+ */
+function isApiRequest(pathname: string): boolean {
+  return pathname.startsWith("/api/");
+}
+
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const isPublic =
@@ -24,15 +33,24 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth?.user;
 
   if (!isLoggedIn) {
+    if (isApiRequest(pathname)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (pathname.startsWith("/admin")) {
+  const needsAdmin =
+    pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
+
+  if (needsAdmin) {
     const role = req.auth?.user?.role as UserRole | undefined;
     if (!canAccessAdmin(role)) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+      return isApiRequest(pathname)
+        ? NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        : NextResponse.redirect(new URL("/dashboard", req.url));
     }
   }
 

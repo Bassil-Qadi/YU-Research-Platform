@@ -80,6 +80,7 @@ status — an Admin approves it from `/admin` before they can sign in.
 | `npm test`        | Run the test suite       |
 | `npm run test:watch` | Tests in watch mode   |
 | `npm run seed`    | Seed the dev admin user  |
+| `npm run sync-indexes` | Rebuild database indexes |
 
 ## Project structure
 
