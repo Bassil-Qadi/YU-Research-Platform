@@ -32,6 +32,7 @@ const ROLE_STYLES: Record<string, string> = {
   Faculty: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
   Student: 'bg-blue-500/15 text-blue-700 dark:text-blue-300',
   Staff:   'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+  Researcher: 'bg-green-500/15 text-green-700 dark:text-green-300',
 }
 
 const DEPT_COLORS = [
@@ -39,11 +40,13 @@ const DEPT_COLORS = [
   'bg-violet-500',
   'bg-emerald-500',
   'bg-amber-500',
-  'bg-rose-500',
+  'bg-green-500',
 ]
 
 export default function AdminPage() {
   const { data, isLoading, isError } = useAdminStats()
+
+  console.log(data)
 
   if (isError) {
     return (
