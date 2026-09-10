@@ -3,12 +3,13 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
-  CheckCircle2, Settings,
+  CheckCircle2,
   Building2, Calendar, Users, Tag, MessageSquare
 } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { PageHeader } from '@/components/layout/page-header'
 import { InviteMemberDialog } from '@/components/projects/invite-member-dialog'
+import { EditProjectDialog } from '@/components/projects/edit-project-dialog'
 import { RequestToJoinDialog } from '@/components/projects/request-to-join-dialog'
 import { JoinRequestsPanel } from '@/components/projects/join-requests-panel'
 import { ProjectFiles } from '@/components/projects/project-files'
@@ -158,10 +159,7 @@ export default function ProjectDetailPage() {
             {canManage && (
               <>
                 <InviteMemberDialog projectId={id} />
-                <Button variant="outline" className="gap-2 rounded-xl">
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </Button>
+                <EditProjectDialog project={project} />
               </>
             )}
             {isMember && !isPi && (

@@ -56,6 +56,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    if (!mongoose.isValidObjectId(params.id)) {
+      return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 })
+    }
+
     await connectDB()
 
     const project = await Project.findById(params.id)
@@ -73,9 +77,31 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
     }
 
+    // Judge the dates as they will be after this edit, not just as sent: moving
+    // only the start date can put it after an end date already stored.
+    const start = parsed.data.startDate ?? project.startDate
+    const end   = 'endDate' in parsed.data ? parsed.data.endDate : project.endDate
+    if (start && end && new Date(end) < new Date(start)) {
+      return NextResponse.json(
+        { error: { fieldErrors: { endDate: ['End date is before the start date'] } } },
+        { status: 422 }
+      )
+    }
+
+    // null clears a field; undefined was never sent and is left alone.
+    const set:   Record<string, unknown> = {}
+    const unset: Record<string, ''>      = {}
+    for (const [key, value] of Object.entries(parsed.data)) {
+      if (value === null) unset[key] = ''
+      else if (value !== undefined) set[key] = value
+    }
+
     const updated = await Project.findByIdAndUpdate(
       params.id,
-      { $set: parsed.data },
+      {
+        ...(Object.keys(set).length   ? { $set: set }     : {}),
+        ...(Object.keys(unset).length ? { $unset: unset } : {}),
+      },
       { new: true, runValidators: true }
     )
       .populate('createdBy', 'name avatarUrl')
