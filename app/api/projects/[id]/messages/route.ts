@@ -9,7 +9,7 @@ import { findMember } from '@/lib/projects/membership'
 type Params = { params: { id: string } }
 
 const sendMessageSchema = z.object({
-  content: z.string().min(1).max(5000).trim(),
+  content: z.string().trim().min(1).max(5000),
 })
 
 // Helper — check if user is a project member

@@ -10,7 +10,7 @@ import { isMember } from '@/lib/projects/membership'
 type Params = { params: { id: string; taskId: string } }
 
 const updateTaskSchema = z.object({
-  title:       z.string().min(1).max(300).trim().optional(),
+  title:       z.string().trim().min(1).max(300).optional(),
   description: z.string().max(2000).optional(),
   status:      z.enum(['todo', 'in-progress', 'in-review', 'done']).optional(),
   priority:    z.enum(['low', 'medium', 'high']).optional(),

@@ -26,6 +26,8 @@ export const RATE_LIMITS = {
   joinRequest:  { limit: 10, windowMs: 60 * 60 * 1000 },
   /** Third-party storage quota is finite. */
   upload:       { limit: 30, windowMs: 60 * 60 * 1000 },
+  /** Person-to-person messages: generous for real use, capped for a script. */
+  directMessage: { limit: 60, windowMs: 5 * 60 * 1000 },
 } as const satisfies Record<string, RateLimitRule>
 
 interface RateLimitState {

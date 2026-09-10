@@ -201,3 +201,41 @@ describe('DELETE /api/projects/[id]', () => {
     expect(res.status).toBe(403)
   })
 })
+
+describe('whitespace-only input', () => {
+  it('is rejected rather than crashing the route', async () => {
+    // Regression: the schemas read `.min(1).max(n).trim()`, but zod applies
+    // trim *after* validating, so "   " passed the length check, became "",
+    // and Mongoose's `required` then failed with a 500.
+    const pi = await makeUser({})
+    const project = await makeProject(pi)
+    const params = { params: { id: project._id.toString() } }
+
+    await signedInAs(pi)
+
+    const { POST: sendMessage } = await import('@/app/api/projects/[id]/messages/route')
+    expect((await sendMessage(
+      jsonRequest('/x', { method: 'POST', body: { content: '   ' } }), params
+    )).status).toBe(422)
+
+    const { POST: createTask } = await import('@/app/api/projects/[id]/tasks/route')
+    expect((await createTask(
+      jsonRequest('/x', { method: 'POST', body: { title: '  \t ' } }), params
+    )).status).toBe(422)
+  })
+
+  it('still accepts text that merely has padding', async () => {
+    const pi = await makeUser({})
+    const project = await makeProject(pi)
+    const params = { params: { id: project._id.toString() } }
+
+    await signedInAs(pi)
+    const { POST: sendMessage } = await import('@/app/api/projects/[id]/messages/route')
+    const res = await sendMessage(
+      jsonRequest('/x', { method: 'POST', body: { content: '  hello  ' } }), params
+    )
+
+    expect(res.status).toBe(201)
+    expect((await res.json()).content).toBe('hello')
+  })
+})

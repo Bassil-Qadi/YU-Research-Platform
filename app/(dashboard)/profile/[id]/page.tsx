@@ -10,6 +10,7 @@ import {
 import { PageContainer } from '@/components/layout/page-container'
 import { EditProfileDialog } from '@/components/profile/edit-profile-dialog'
 import { AvatarUpload } from '@/components/profile/avatar-upload'
+import { MessageUserButton } from '@/components/messaging/message-user-button'
 import { UserAvatar } from '@/components/ui/user-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -94,7 +95,10 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-            {isMe && <EditProfileDialog user={user} />}
+            <div className="flex items-center gap-2">
+              {!isMe && <MessageUserButton userId={user._id} />}
+              {isMe && <EditProfileDialog user={user} />}
+            </div>
           </div>
 
           {isMe && (
