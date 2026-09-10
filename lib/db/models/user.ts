@@ -1,5 +1,5 @@
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
-import { USER_ROLES } from "@/types";
+import { USER_ROLES, USER_STATUSES } from "@/types";
 
 const userSchema = new Schema(
   {
@@ -21,7 +21,7 @@ const userSchema = new Schema(
     name: { type: String, required: true },
     status: {
       type:    String,
-      enum:    ['pending', 'active', 'rejected'],
+      enum:    USER_STATUSES,
       default: 'pending',
       index:   true,
     },

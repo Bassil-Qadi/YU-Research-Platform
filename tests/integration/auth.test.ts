@@ -173,3 +173,25 @@ describe('session revalidation', () => {
     expect(await revalidateToken({ checkedAt: 0 })).toBeNull()
   })
 })
+
+describe('suspended accounts', () => {
+  beforeEach(() => vi.resetModules())
+
+  it('cannot sign in, even with the right password', async () => {
+    await makeUser({ email: 'suspended@university.edu', status: 'suspended' })
+
+    // Without this, suspension only took effect when the token was next
+    // revalidated — and the person could simply sign in again in the meantime.
+    await expect(authorizeWith('suspended@university.edu', TEST_PASSWORD))
+      .rejects.toSatisfy((e: unknown) => codeOf(e) === 'account_suspended')
+  })
+
+  it('can sign in again once reinstated', async () => {
+    const user = await makeUser({ email: 'back@university.edu', status: 'suspended' })
+
+    const { User } = await import('@/lib/db/models/user')
+    await User.updateOne({ _id: user._id }, { $set: { status: 'active' } })
+
+    await expect(authorizeWith('back@university.edu', TEST_PASSWORD)).resolves.toBeTruthy()
+  })
+})

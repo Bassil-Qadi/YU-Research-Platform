@@ -21,6 +21,11 @@ export class AccountRejectedError extends CredentialsSignin {
   code = "account_rejected";
 }
 
+/** Was active; an administrator withdrew access. */
+export class AccountSuspendedError extends CredentialsSignin {
+  code = "account_suspended";
+}
+
 /** Too many sign-in attempts for this address or from this address. */
 export class TooManyAttemptsError extends CredentialsSignin {
   code = "too_many_attempts";
@@ -32,6 +37,8 @@ export const AUTH_ERROR_MESSAGES: Record<string, string> = {
     "Your account is pending admin approval. You will be notified once approved.",
   account_rejected:
     "Your registration was not approved. Please contact the university admin.",
+  account_suspended:
+    "Your account has been suspended. Please contact the university admin.",
   too_many_attempts:
     "Too many sign-in attempts. Please wait a few minutes and try again.",
 };

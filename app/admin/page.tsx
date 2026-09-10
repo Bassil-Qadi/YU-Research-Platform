@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { PendingUsers } from '@/components/admin/pending-users'
+import { UserManagement } from '@/components/admin/user-management'
 
 const STATUS_STYLES: Record<string, string> = {
   active:    'bg-blue-500/15 text-blue-700 dark:text-blue-300',
@@ -113,6 +114,9 @@ export default function AdminPage() {
 
       {/* Pending users */}
       <PendingUsers />
+
+      {/* Everyone else */}
+      <UserManagement />
 
       {/* Charts row */}
       <div className="grid gap-6 lg:grid-cols-3">
@@ -305,18 +309,6 @@ export default function AdminPage() {
         </Card>
       </div>
 
-      {/* Admin note */}
-      <Card className="border-dashed border-amber-500/30 bg-amber-500/5">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            <CardTitle className="font-display text-base">Admin access</CardTitle>
-          </div>
-          <CardDescription>
-            You have administrator privileges. User management and moderation tools coming in a future release.
-          </CardDescription>
-        </CardHeader>
-      </Card>
     </PageContainer>
   )
 }

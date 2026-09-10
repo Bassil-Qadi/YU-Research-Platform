@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server'
 import { User } from '@/lib/db/models/user'
 import Project from '@/lib/db/models/Project'
 import type { MemberRole } from '@/lib/db/models/Project'
-import type { UserRole } from '@/types'
+import type { UserRole, UserStatus } from '@/types'
 
 let counter = 0
 const unique = () => `${Date.now()}-${counter++}`
@@ -15,7 +15,7 @@ export async function makeUser(overrides: Partial<{
   name:         string
   email:        string
   role:         UserRole
-  status:       'pending' | 'active' | 'rejected'
+  status:       UserStatus
   department:   string
   isPublic:     boolean
   password:     string | null

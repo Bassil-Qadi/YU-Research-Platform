@@ -217,3 +217,38 @@ export function joinRequestDeclined(
     text: `${lines.join('\n\n')}\n\n${appUrl()}/projects`,
   }
 }
+
+export function accountSuspended(name: string, reason?: string): EmailContent {
+  const lines = [
+    `Hi ${name},`,
+    'Your access to the Research Collaboration Platform has been suspended by an administrator.',
+    ...(reason ? [`Reason: ${reason}`] : []),
+    'If you think this is a mistake, please contact your university administrator.',
+  ]
+
+  return {
+    subject: 'Your account has been suspended',
+    html: layout({
+      heading: 'Account suspended',
+      body:    lines.map(p).join(''),
+    }),
+    text: lines.join('\n\n'),
+  }
+}
+
+export function accountReinstated(name: string): EmailContent {
+  const lines = [
+    `Hi ${name},`,
+    'Your access has been restored. You can sign in again as normal.',
+  ]
+
+  return {
+    subject: 'Your account has been restored',
+    html: layout({
+      heading: 'Welcome back',
+      body:    lines.map(p).join(''),
+      cta:     { label: 'Sign in', href: `${appUrl()}/login` },
+    }),
+    text: `${lines.join('\n\n')}\n\n${appUrl()}/login`,
+  }
+}

@@ -9,6 +9,7 @@ import { User } from "@/lib/db/models/user";
 import {
   AccountPendingError,
   AccountRejectedError,
+  AccountSuspendedError,
   InvalidCredentialsError,
   TooManyAttemptsError,
 } from "@/lib/auth/errors";
@@ -75,8 +76,13 @@ export function getAuthProviders(): Provider[] {
         if (!passwordMatches) throw new InvalidCredentialsError();
 
         // Only reveal account status once the password has been proven.
-        if (user.status === "pending") throw new AccountPendingError();
-        if (user.status === "rejected") throw new AccountRejectedError();
+        // Deny by default: only an active account signs in, so a status added
+        // later cannot quietly grant access by not being listed here.
+        if (user.status !== "active") {
+          if (user.status === "pending") throw new AccountPendingError();
+          if (user.status === "rejected") throw new AccountRejectedError();
+          throw new AccountSuspendedError();
+        }
 
         return {
           id: user._id.toString(),
