@@ -7,6 +7,7 @@ import { apiFetch, errorMessage, ApiError } from '@/lib/api'
 import { updateProjectSchema } from '@/lib/validations/project'
 import type { ProjectDetail } from '@/hooks/useProject'
 import { ChipInput } from '@/components/ui/chip-input'
+import { DepartmentSelect } from '@/components/ui/department-select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -275,7 +276,7 @@ export function EditProjectDialog({ project }: { project: ProjectDetail }) {
 
           <div className="space-y-1.5">
             <Label htmlFor="edit-department">Department</Label>
-            <Input id="edit-department" value={form.department} onChange={(e) => set('department', e.target.value)} className="rounded-xl" />
+            <DepartmentSelect id="edit-department" value={form.department} onChange={(v) => set('department', v)} />
             {fieldError('department')}
           </div>
 

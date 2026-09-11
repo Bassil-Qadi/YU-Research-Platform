@@ -9,6 +9,7 @@ import { Loader2, Plus } from 'lucide-react'
 import type { z } from 'zod'
 import { createProjectSchema, type CreateProjectInput } from '@/lib/validations/project'
 import { apiFetch, errorMessage } from '@/lib/api'
+import { DepartmentSelect } from '@/components/ui/department-select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -30,7 +31,7 @@ export function CreateProjectDialog() {
   const router = useRouter()
   const queryClient = useQueryClient()
 
-  const { register, handleSubmit, setValue, reset, formState: { errors, isSubmitting } } =
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting } } =
   useForm<CreateProjectFormValues, unknown, CreateProjectInput>({
     resolver: zodResolver(createProjectSchema),
     defaultValues: {
@@ -119,7 +120,11 @@ export function CreateProjectDialog() {
 
           <div className="space-y-1.5">
             <Label htmlFor="department">Department</Label>
-            <Input id="department" {...register('department')} placeholder="e.g. School of Engineering" className="rounded-xl" />
+            <DepartmentSelect
+              id="department"
+              value={watch('department') ?? ''}
+              onChange={(v) => setValue('department', v, { shouldValidate: true })}
+            />
             {errors.department && <p className="text-xs text-destructive">{errors.department.message}</p>}
           </div>
 

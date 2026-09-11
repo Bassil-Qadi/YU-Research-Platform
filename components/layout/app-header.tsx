@@ -1,7 +1,7 @@
 "use client";
 
-import { Search } from "lucide-react";
 import { MobileNav } from "@/components/layout/app-sidebar";
+import { GlobalSearch } from "@/components/layout/global-search";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserNav } from "@/components/layout/user-nav";
 import {
@@ -18,19 +18,7 @@ export function AppHeader() {
       <MobileNav />
 
       <div className="flex flex-1 items-center gap-4">
-        <div className="search-glow relative hidden max-w-md flex-1 rounded-xl transition-shadow duration-300 md:block">
-          <Search
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
-          <input
-            type="search"
-            placeholder="Search projects, people, messages…"
-            disabled
-            aria-label="Search (coming soon)"
-            className="h-10 w-full rounded-xl border border-input/80 bg-muted/40 pl-10 pr-4 text-sm transition-all placeholder:text-muted-foreground/60 focus-visible:outline-none disabled:cursor-not-allowed"
-          />
-        </div>
+        <GlobalSearch />
       </div>
 
       <TooltipProvider delayDuration={300}>

@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/db/connect'
 import Project, { type IProject } from '@/lib/db/models/Project'
 import { createProjectSchema } from '@/lib/validations/project'
 import type { FilterQuery } from 'mongoose'
+import { equalsInsensitive } from '@/lib/regex'
 
 // GET /api/projects — list & search
 export async function GET(req: NextRequest) {
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
     ]
 
     if (q) filter.$text = { $search: q }
-    if (department) filter.department = department
+    if (department) filter.department = equalsInsensitive(department)
     if (status) filter.status = status
     if (tag) filter.tags = tag
     if (mine === 'true') {

@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/db/connect'
 import { User } from '@/lib/db/models/user'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
+import { normaliseDepartment } from '@/lib/departments'
 import { sendEmail } from '@/lib/email/client'
 import { RATE_LIMITS, clientIp, rateLimit, rateLimitHeaders } from '@/lib/rate-limit'
 import { registrationReceived, registrationPendingForAdmins } from '@/lib/email/templates'
@@ -12,7 +13,7 @@ const registerSchema = z.object({
   email:      z.string().email('Invalid email address'),
   password:   z.string().min(8, 'Password must be at least 8 characters'),
   role:       z.enum(['Student', 'Faculty', 'Staff', 'Researcher']),
-  department: z.string().min(1, 'Department is required'),
+  department: z.string().trim().min(1, 'Department is required').transform(normaliseDepartment),
   position:   z.string().optional(),
 })
 

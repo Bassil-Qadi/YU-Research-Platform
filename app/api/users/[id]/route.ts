@@ -25,7 +25,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
     const [user, projects] = await Promise.all([
       User.findById(userId)
-        .select('name email department position researchInterests avatarUrl role bio orcidId publicationsUrl isPublic createdAt')
+        .select('name email department position researchInterests avatarUrl role bio orcidId publicationsUrl isPublic status createdAt')
         .lean(),
       Project.find({ 'members.userId': userId, visibility: { $ne: 'private' } })
         .select('title abstract department status members updatedAt')
@@ -34,6 +34,11 @@ export async function GET(_req: NextRequest, { params }: Params) {
     ])
 
     if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Someone not (or no longer) approved has no public profile.
+    if (userId !== session.user.id && user.status && user.status !== 'active') {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 

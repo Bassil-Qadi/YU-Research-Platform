@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { cn } from "@/lib/utils";
+import { getPlatformStats } from "@/lib/platform-stats";
 
 const features = [
   {
@@ -50,19 +51,19 @@ const features = [
   },
 ];
 
-const stats = [
-  { value: "2,400+", label: "Researchers" },
-  { value: "180+", label: "Active projects" },
-  { value: "12", label: "Departments" },
-  { value: "98%", label: "Satisfaction" },
-];
-
 export default async function HomePage() {
   const session = await auth();
 
   if (session?.user) {
     redirect("/dashboard");
   }
+
+  const counts = await getPlatformStats();
+  const stats = counts && [
+    { value: counts.researchers.toLocaleString(),    label: counts.researchers === 1 ? "Researcher" : "Researchers" },
+    { value: counts.activeProjects.toLocaleString(), label: counts.activeProjects === 1 ? "Active project" : "Active projects" },
+    { value: counts.departments.toLocaleString(),    label: counts.departments === 1 ? "Department" : "Departments" },
+  ];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -147,9 +148,10 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Social proof strip */}
+      {/* Platform at a glance — live counts, omitted if they cannot be read */}
+      {stats && (
       <section className="border-y border-border/60 bg-card/40 backdrop-blur-sm">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-10 md:grid-cols-4 md:px-6">
+        <div className="mx-auto grid max-w-6xl grid-cols-3 gap-6 px-4 py-10 md:px-6">
           {stats.map((stat, i) => (
             <div
               key={stat.label}
@@ -164,6 +166,7 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+      )}
 
       {/* Features */}
       <section className="py-24">

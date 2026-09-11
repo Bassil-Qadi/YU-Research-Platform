@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
 import { User, type IUser } from '@/lib/db/models/user'
 import { USER_ROLES, USER_STATUSES } from '@/types'
+import { containsInsensitive } from '@/lib/regex'
 
 // GET /api/admin/users — the full directory, searchable and filterable
 export async function GET(req: NextRequest) {
@@ -33,11 +34,12 @@ export async function GET(req: NextRequest) {
       filter.role = role
     }
     if (q) {
+      const pattern = containsInsensitive(q)
       filter.$or = [
-        { name:         { $regex: q, $options: 'i' } },
-        { email:        { $regex: q, $options: 'i' } },
-        { department:   { $regex: q, $options: 'i' } },
-        { universityId: { $regex: q, $options: 'i' } },
+        { name:         pattern },
+        { email:        pattern },
+        { department:   pattern },
+        { universityId: pattern },
       ]
     }
 

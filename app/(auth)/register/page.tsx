@@ -18,6 +18,7 @@ import {
   SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
+import { DEPARTMENTS } from '@/lib/departments'
 
 const registerSchema = z.object({
   name:       z.string().min(2, 'Name must be at least 2 characters'),
@@ -33,17 +34,6 @@ const registerSchema = z.object({
 })
 
 type RegisterInput = z.infer<typeof registerSchema>
-
-const DEPARTMENTS = [
-  'School of Engineering',
-  'College of Natural Sciences',
-  'School of Social Sciences',
-  'School of Medicine',
-  'School of Business',
-  'College of Arts & Humanities',
-  'School of Education',
-  'Other',
-]
 
 export default function RegisterPage() {
   const [submitted, setSubmitted] = useState(false)

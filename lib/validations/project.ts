@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { normaliseDepartment } from '@/lib/departments'
 
 // Trim before measuring: zod's .trim() is a transform, so placed after .min()
 // it lets "   " through the length check and stores an empty string.
@@ -11,7 +12,7 @@ export const createProjectSchema = z.object({
   tags: z.array(tag).max(10, 'At most 10 tags'),
   status: z.enum(['active', 'completed', 'seeking', 'paused']).default('active'),
   visibility: z.enum(['public', 'university', 'private']).default('university'),
-  department: z.string().trim().min(1, 'Department is required'),
+  department: z.string().trim().min(1, 'Department is required').transform(normaliseDepartment),
   fundingSource: z.string().trim().max(200).optional(),
   fundingAmount: z.number().positive().optional(),
   startDate: z.string().min(1, 'Start date is required'),

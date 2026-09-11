@@ -14,22 +14,19 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useUsers } from '@/hooks/useUsers'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useDepartments } from '@/hooks/useDepartments'
+import { USER_ROLES } from '@/types'
 
-const DEPARTMENTS = [
-  'All departments',
-  'School of Engineering',
-  'College of Natural Sciences',
-  'School of Social Sciences',
-  'School of Medicine',
-]
-
-const ROLES = ['All roles', 'Faculty', 'Student', 'Staff']
+// Every role the platform has — Researcher and Admin used to be missing, so
+// half the real accounts could not be filtered to.
+const ROLES = ['All roles', ...USER_ROLES]
 
 export default function DirectoryPage() {
   const [search, setSearch]     = useState('')
   const [department, setDept]   = useState('')
   const [role, setRole]         = useState('')
   const debouncedSearch         = useDebounce(search, 400)
+  const DEPARTMENTS             = ['All departments', ...useDepartments()]
 
   const { data, isLoading, isError } = useUsers({
     q:          debouncedSearch || undefined,

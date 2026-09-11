@@ -209,7 +209,7 @@ export default function LoginPage() {
         <div className="relative space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm backdrop-blur-sm">
             <Sparkles className="h-3.5 w-3.5" aria-hidden />
-            Trusted by 2,400+ researchers
+            Built for university research teams
           </div>
 
           <h2 className="font-display text-4xl font-bold leading-tight tracking-tight">

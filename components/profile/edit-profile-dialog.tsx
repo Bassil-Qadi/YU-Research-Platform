@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { Loader2, Pencil, X } from 'lucide-react'
 import { useUpdateProfile } from '@/hooks/useUserProfile'
 import { errorMessage } from '@/lib/api'
+import { DepartmentSelect } from '@/components/ui/department-select'
 import type { UserSummary } from '@/hooks/useUsers'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,7 +36,7 @@ export function EditProfileDialog({ user }: EditProfileDialogProps) {
   const [error, setError]       = useState<string | null>(null)
   const { mutateAsync, isPending } = useUpdateProfile()
 
-  const { register, handleSubmit } = useForm<ProfileFormValues>({
+  const { register, handleSubmit, watch, setValue } = useForm<ProfileFormValues>({
     defaultValues: {
       bio:             user.bio ?? '',
       department:      user.department ?? '',
@@ -104,7 +105,11 @@ export function EditProfileDialog({ user }: EditProfileDialogProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="department">Department</Label>
-              <Input id="department" {...register('department')} placeholder="e.g. School of Engineering" className="rounded-xl" />
+              <DepartmentSelect
+                id="department"
+                value={watch('department') ?? ''}
+                onChange={(v) => setValue('department', v, { shouldDirty: true })}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="position">Position</Label>

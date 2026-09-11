@@ -15,6 +15,7 @@ import {
   DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useProjects, type ProjectSummary } from '@/hooks/useProjects'
+import { useDepartments } from '@/hooks/useDepartments'
 import { cn } from '@/lib/utils'
 
 /** Project statuses as the API stores them, in the card's own vocabulary. */
@@ -32,26 +33,19 @@ const STATUS_FILTERS = [
   { label: 'My projects', value: 'mine' },
 ]
 
-const DEPARTMENTS = [
-  'All departments',
-  'School of Engineering',
-  'College of Natural Sciences',
-  'School of Social Sciences',
-  'School of Medicine',
-]
-
 export default function ProjectsPage() {
   const [view, setView]           = useState<'grid' | 'list'>('grid')
   const [activeFilter, setFilter] = useState('')
   const [search, setSearch]       = useState('')
   const [department, setDept]     = useState('')
   const debouncedSearch           = useDebounce(search, 400)
+  const DEPARTMENTS               = ['All departments', ...useDepartments()]
 
   const { data, isLoading, isError } = useProjects({
     q:          debouncedSearch || undefined,
     status:     activeFilter !== 'mine' ? activeFilter || undefined : undefined,
     mine:       activeFilter === 'mine',
-    department: department && department !== 'All departments' ? department.toLowerCase() : undefined,
+    department: department && department !== 'All departments' ? department : undefined,
   })
 
   const projects = data?.projects ?? []

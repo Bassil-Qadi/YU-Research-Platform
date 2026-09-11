@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/db/connect'
 import { User } from '@/lib/db/models/user'
 import Project from '@/lib/db/models/Project'
 import { z } from 'zod'
+import { normaliseDepartment } from '@/lib/departments'
 
 // GET /api/users/me — fetch own profile
 export async function GET(_req: NextRequest) {
@@ -39,7 +40,7 @@ export async function GET(_req: NextRequest) {
 // PATCH /api/users/me — update own profile
 const updateProfileSchema = z.object({
   bio:               z.string().max(1000).optional(),
-  department:        z.string().optional(),
+  department:        z.string().trim().transform(normaliseDepartment).optional(),
   position:          z.string().optional(),
   researchInterests: z.array(z.string()).max(10).optional(),
   orcidId:           z.string().optional(),
