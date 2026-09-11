@@ -1,5 +1,6 @@
 'use client'
 
+import { forwardRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell, Check } from 'lucide-react'
 import { useNotifications, type INotification } from '@/hooks/useNotifications'
@@ -24,7 +25,15 @@ const TYPE_ICONS: Record<string, string> = {
   'task-comment':   '🗨️',
 }
 
-export function NotificationBell() {
+/**
+ * Takes a ref and passes its props through, so it can sit inside a Radix
+ * `asChild` trigger (the header wraps it in a Tooltip). Without this, React
+ * warned about the ref and the tooltip's handlers never reached the button.
+ */
+export const NotificationBell = forwardRef<
+  HTMLButtonElement,
+  React.ComponentPropsWithoutRef<'button'>
+>(function NotificationBell({ className, ...props }, ref) {
   const router = useRouter()
   const { data, markAllRead, markOneRead } = useNotifications()
 
@@ -39,16 +48,21 @@ export function NotificationBell() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-  className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none"
-  aria-label="Notifications"
->
-  <Bell className="h-4 w-4" />
-  {unreadCount > 0 && (
-    <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
-      {unreadCount > 9 ? '9+' : unreadCount}
-    </span>
-  )}
-</DropdownMenuTrigger>
+        ref={ref}
+        {...props}
+        className={cn(
+          'relative inline-flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none',
+          className
+        )}
+        aria-label="Notifications"
+      >
+        <Bell className="h-4 w-4" />
+        {unreadCount > 0 && (
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-80 p-0" sideOffset={8}>
         {/* Header */}
@@ -107,4 +121,4 @@ export function NotificationBell() {
       </DropdownMenuContent>
     </DropdownMenu>
   )
-}
+})

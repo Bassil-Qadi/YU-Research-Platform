@@ -25,19 +25,6 @@ export function AppHeader() {
         <div className="flex items-center gap-1">
           <Tooltip>
             <TooltipTrigger asChild>
-              {/* <Button
-                variant="ghost"
-                size="icon"
-                className="relative h-10 w-10 rounded-xl transition-transform hover:scale-105 active:scale-95"
-                disabled
-                aria-label="Notifications (coming soon)"
-              >
-                <Bell className="h-4 w-4" />
-                <span
-                  className="absolute right-2 top-2 h-2 w-2 rounded-full bg-violet-500 animate-pulse-dot"
-                  aria-hidden
-                />
-              </Button> */}
               <NotificationBell />
             </TooltipTrigger>
             <TooltipContent>Notifications</TooltipContent>
