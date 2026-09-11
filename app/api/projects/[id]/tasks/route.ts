@@ -3,6 +3,8 @@ import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
 import Task from '@/lib/db/models/Task'
+import TaskComment from '@/lib/db/models/TaskComment'
+import mongoose from 'mongoose'
 import { z } from 'zod'
 import { createNotifications } from '@/lib/notifications'
 import { isMember } from '@/lib/projects/membership'
@@ -37,13 +39,28 @@ export async function GET(_req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const tasks = await Task.find({ projectId: params.id })
-      .sort({ status: 1, order: 1 })
-      .populate('assigneeId', 'name avatarUrl')
-      .populate('createdBy',  'name')
-      .lean()
+    const [tasks, counts] = await Promise.all([
+      Task.find({ projectId: params.id })
+        .sort({ status: 1, order: 1 })
+        .populate('assigneeId', 'name avatarUrl')
+        .populate('createdBy',  'name')
+        .lean(),
+      // One grouped count for the whole board, computed rather than stored on
+      // each task: a stored counter drifts the first time two writes race.
+      TaskComment.aggregate<{ _id: mongoose.Types.ObjectId; count: number }>([
+        { $match: { projectId: new mongoose.Types.ObjectId(params.id) } },
+        { $group: { _id: '$taskId', count: { $sum: 1 } } },
+      ]),
+    ])
 
-    return NextResponse.json({ tasks })
+    const byTask = new Map(counts.map((c) => [c._id.toString(), c.count]))
+
+    return NextResponse.json({
+      tasks: tasks.map((task) => ({
+        ...task,
+        commentCount: byTask.get(task._id.toString()) ?? 0,
+      })),
+    })
   } catch (err) {
     console.error('[GET /api/projects/[id]/tasks]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

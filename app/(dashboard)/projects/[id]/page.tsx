@@ -1,6 +1,6 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
   CheckCircle2,
@@ -58,6 +58,8 @@ const STATUS_STYLES: Record<string, string> = {
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
+  // A comment notification links here with ?task=, so land on that task.
+  const linkedTaskId = useSearchParams().get('task')
   const { data: session } = useSession()
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -205,7 +207,7 @@ export default function ProjectDetailPage() {
         )}
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
+      <Tabs defaultValue={linkedTaskId ? 'tasks' : 'overview'} className="space-y-6">
         <TabsList className="w-full justify-start sm:w-auto">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="team">
@@ -412,6 +414,7 @@ export default function ProjectDetailPage() {
           {isMember ? (
             <KanbanBoard
               projectId={id}
+              initialTaskId={linkedTaskId}
               members={project.members.map((m) => ({
                 _id:  m.userId._id,
                 name: m.userId.name,

@@ -17,6 +17,7 @@ export interface ITask {
   dueDate?:   string
   assigneeId?: { _id: string; name: string; avatarUrl?: string } | null
   createdBy:  { _id: string; name: string }
+  commentCount?: number
   createdAt:  string
   updatedAt:  string
 }
@@ -64,7 +65,9 @@ export function useProjectTasks(projectId: string) {
         ['tasks', projectId],
         (old: { tasks: ITask[] } | undefined) => ({
           tasks: (old?.tasks ?? []).map((t) =>
-            t._id === updated._id ? updated : t
+            // The update payload has no comment count (only the list computes
+            // it), so carry the one we already have across.
+            t._id === updated._id ? { ...updated, commentCount: t.commentCount } : t
           ),
         })
       )
@@ -79,9 +82,26 @@ export function useProjectTasks(projectId: string) {
       )
     }
 
+    // Keep each card's comment count current without refetching the board.
+    const bumpComments = (taskId: string, by: number) =>
+      queryClient.setQueryData(
+        ['tasks', projectId],
+        (old: { tasks: ITask[] } | undefined) => ({
+          tasks: (old?.tasks ?? []).map((t) =>
+            t._id === taskId
+              ? { ...t, commentCount: Math.max(0, (t.commentCount ?? 0) + by) }
+              : t
+          ),
+        })
+      )
+    const onCommentAdded   = ({ taskId }: { taskId: string }) => bumpComments(taskId, 1)
+    const onCommentRemoved = ({ taskId }: { taskId: string }) => bumpComments(taskId, -1)
+
     socket.on('task-created', onTaskCreated)
     socket.on('task-updated', onTaskUpdated)
     socket.on('task-deleted', onTaskDeleted)
+    socket.on('task-comment:new', onCommentAdded)
+    socket.on('task-comment:deleted', onCommentRemoved)
 
     return () => {
       leaveRoom()
@@ -90,6 +110,8 @@ export function useProjectTasks(projectId: string) {
       socket.off('task-created', onTaskCreated)
       socket.off('task-updated', onTaskUpdated)
       socket.off('task-deleted', onTaskDeleted)
+      socket.off('task-comment:new', onCommentAdded)
+      socket.off('task-comment:deleted', onCommentRemoved)
     }
   }, [projectId, queryClient])
 

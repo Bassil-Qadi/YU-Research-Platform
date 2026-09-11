@@ -11,6 +11,7 @@ export const NOTIFICATION_TYPES = [
   'join-approved',
   'join-declined',
   'role-changed',
+  'task-comment',
 ] as const
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number]

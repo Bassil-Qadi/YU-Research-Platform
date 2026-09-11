@@ -21,6 +21,7 @@ const TYPE_ICONS: Record<string, string> = {
   'join-approved':  '🤝',
   'join-declined':  '🚫',
   'role-changed':   '⭐',
+  'task-comment':   '🗨️',
 }
 
 export function NotificationBell() {

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { Plus, Loader2, Calendar, X } from "lucide-react";
+import { Plus, Loader2, Calendar, MessageSquare, X } from "lucide-react";
 import {
   useProjectTasks,
   COLUMNS,
@@ -10,9 +10,10 @@ import {
   type TaskStatus,
   type TaskPriority,
 } from "@/hooks/useProjectTasks";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, errorMessage } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { TaskDetailDialog } from "@/components/tasks/task-detail-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,22 +54,23 @@ function TaskCard({
   task,
   projectId,
   onMove,
+  onOpen,
 }: {
   task: ITask;
   projectId: string;
   onMove: (taskId: string, status: TaskStatus) => void;
+  onOpen: (taskId: string) => void;
 }) {
   const queryClient = useQueryClient();
   const [deleting, setDeleting] = useState(false);
 
-  const initials = task.assigneeId?.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  async function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation(); // the card itself opens the task
+    const discussion = task.commentCount
+      ? ` and its ${task.commentCount} comment${task.commentCount === 1 ? "" : "s"}`
+      : "";
+    if (!confirm(`Delete "${task.title}"${discussion}?`)) return;
 
-  async function handleDelete() {
     setDeleting(true);
     try {
       await apiFetch(`/api/projects/${projectId}/tasks/${task._id}`, {
@@ -80,6 +82,9 @@ function TaskCard({
           tasks: (old?.tasks ?? []).filter((t) => t._id !== task._id),
         }),
       );
+    } catch (err) {
+      // It used to fail silently and leave the card where it was.
+      alert(errorMessage(err, "Could not delete this task"));
     } finally {
       setDeleting(false);
     }
@@ -90,10 +95,23 @@ function TaskCard({
   );
 
   return (
-    <div className="group relative rounded-xl border border-border/60 bg-card p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(task._id)}
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onOpen(task._id);
+        }
+      }}
+      aria-label={`Open task: ${task.title}`}
+      className="group relative cursor-pointer rounded-xl border border-border/60 bg-card p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
       {/* Delete button */}
       <button
         onClick={handleDelete}
+        aria-label="Delete task"
         disabled={deleting}
         className="absolute right-2 top-2 hidden rounded-lg p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-destructive group-hover:flex group-hover:opacity-100"
       >
@@ -138,12 +156,23 @@ function TaskCard({
           </span>
         )}
 
+        {(task.commentCount ?? 0) > 0 && (
+          <span
+            className="flex items-center gap-1 text-[10px] text-muted-foreground"
+            aria-label={`${task.commentCount} comments`}
+          >
+            <MessageSquare className="h-3 w-3" />
+            {task.commentCount}
+          </span>
+        )}
+
         {task.assigneeId && (
-          <Avatar className="h-5 w-5 ml-auto">
-            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-[8px] font-bold text-white">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar
+            name={task.assigneeId.name}
+            src={task.assigneeId.avatarUrl}
+            className="ml-auto h-5 w-5"
+            fallbackClassName="text-[8px]"
+          />
         )}
       </div>
 
@@ -152,7 +181,7 @@ function TaskCard({
   {otherStatuses.map((s) => (
     <button
       key={s}
-      onClick={() => onMove(task._id, s)}
+      onClick={(e) => { e.stopPropagation(); onMove(task._id, s); }}
       className="rounded-lg border border-border/60 px-2 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
     >
       → {COLUMNS.find((c) => c.id === s)?.label}
@@ -364,13 +393,25 @@ function CreateTaskDialog({
 export function KanbanBoard({
   projectId,
   members,
+  initialTaskId,
 }: {
   projectId: string;
   members: { _id: string; name: string }[];
+  /** Opened on arrival — a comment notification links straight to its task. */
+  initialTaskId?: string | null;
 }) {
   const queryClient = useQueryClient();
   const { data, isLoading } = useProjectTasks(projectId);
   const tasks = data?.tasks ?? [];
+
+  const [openTaskId, setOpenTaskId] = useState<string | null>(initialTaskId ?? null);
+  useEffect(() => {
+    if (initialTaskId) setOpenTaskId(initialTaskId);
+  }, [initialTaskId]);
+
+  // Read from the live list, so the dialog reflects moves and edits made by
+  // others — and closes by itself if the task is deleted while it is open.
+  const openTask = tasks.find((t) => t._id === openTaskId) ?? null;
 
   async function handleMove(taskId: string, newStatus: TaskStatus) {
     // Optimistic update
@@ -404,6 +445,13 @@ export function KanbanBoard({
   }
 
   return (
+    <>
+    <TaskDetailDialog
+      task={openTask}
+      projectId={projectId}
+      open={!!openTask}
+      onOpenChange={(open) => { if (!open) setOpenTaskId(null); }}
+    />
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {COLUMNS.map((col) => {
         const colTasks = tasks
@@ -429,6 +477,7 @@ export function KanbanBoard({
                   task={task}
                   projectId={projectId}
                   onMove={handleMove}
+                  onOpen={setOpenTaskId}
                 />
               ))}
               <CreateTaskDialog
@@ -441,5 +490,6 @@ export function KanbanBoard({
         );
       })}
     </div>
+    </>
   );
 }

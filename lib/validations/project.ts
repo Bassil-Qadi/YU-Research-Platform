@@ -62,6 +62,11 @@ export const transferPiSchema = z.object({
   userId: z.string().min(1, 'A member is required'),
 })
 
+/** A comment on a task. Trimmed before measuring, so whitespace alone is refused. */
+export const commentSchema = z.object({
+  content: z.string().trim().min(1, 'Write something first').max(2000),
+})
+
 export type CreateProjectInput = z.infer<typeof createProjectSchema>
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>

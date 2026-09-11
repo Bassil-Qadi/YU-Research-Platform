@@ -7,6 +7,7 @@ import Task from '@/lib/db/models/Task'
 import Message from '@/lib/db/models/Message'
 import JoinRequest from '@/lib/db/models/JoinRequest'
 import ProjectFile from '@/lib/db/models/ProjectFile'
+import TaskComment from '@/lib/db/models/TaskComment'
 import { deleteFile } from '@/lib/storage'
 import { canEditProject, isMember, isProjectPi } from '@/lib/projects/membership'
 import mongoose from 'mongoose'
@@ -145,6 +146,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       Message.deleteMany({ projectId: params.id }),
       JoinRequest.deleteMany({ projectId: params.id }),
       ProjectFile.deleteMany({ projectId: params.id }),
+      TaskComment.deleteMany({ projectId: params.id }),
     ])
 
     await Project.findByIdAndDelete(params.id)

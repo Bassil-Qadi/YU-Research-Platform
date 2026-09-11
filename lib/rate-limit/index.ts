@@ -28,6 +28,8 @@ export const RATE_LIMITS = {
   upload:       { limit: 30, windowMs: 60 * 60 * 1000 },
   /** Person-to-person messages: generous for real use, capped for a script. */
   directMessage: { limit: 60, windowMs: 5 * 60 * 1000 },
+  /** Comments notify everyone in the thread, so they get the same ceiling. */
+  comment:       { limit: 60, windowMs: 5 * 60 * 1000 },
 } as const satisfies Record<string, RateLimitRule>
 
 interface RateLimitState {

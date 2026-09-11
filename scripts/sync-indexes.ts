@@ -20,10 +20,11 @@ import JoinRequest from "@/lib/db/models/JoinRequest";
 import ProjectFile from "@/lib/db/models/ProjectFile";
 import Conversation from "@/lib/db/models/Conversation";
 import DirectMessage from "@/lib/db/models/DirectMessage";
+import TaskComment from "@/lib/db/models/TaskComment";
 
 loadEnvConfig(process.cwd());
 
-const models = [User, Project, Task, Message, Notification, JoinRequest, ProjectFile, Conversation, DirectMessage];
+const models = [User, Project, Task, Message, Notification, JoinRequest, ProjectFile, Conversation, DirectMessage, TaskComment];
 
 async function main() {
   await connectDB();

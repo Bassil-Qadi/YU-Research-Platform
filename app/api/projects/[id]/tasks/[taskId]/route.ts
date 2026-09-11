@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
 import Task from '@/lib/db/models/Task'
+import TaskComment from '@/lib/db/models/TaskComment'
 import { z } from 'zod'
 import { createNotifications } from '@/lib/notifications'
 import { isMember } from '@/lib/projects/membership'
@@ -106,6 +107,8 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
+
+    await TaskComment.deleteMany({ taskId: params.taskId })
 
     global.io?.to(`project:${params.id}`).emit('task-deleted', { taskId: params.taskId })
 
