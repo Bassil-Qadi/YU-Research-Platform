@@ -4,25 +4,21 @@ import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
 import Task from '@/lib/db/models/Task'
 import TaskComment from '@/lib/db/models/TaskComment'
-import { z } from 'zod'
 import { createNotifications } from '@/lib/notifications'
 import { isMember } from '@/lib/projects/membership'
+import { updateTaskSchema } from '@/lib/validations/task'
 
 type Params = { params: { id: string; taskId: string } }
-
-const updateTaskSchema = z.object({
-  title:       z.string().trim().min(1).max(300).optional(),
-  description: z.string().max(2000).optional(),
-  status:      z.enum(['todo', 'in-progress', 'in-review', 'done']).optional(),
-  priority:    z.enum(['low', 'medium', 'high']).optional(),
-  assigneeId:  z.string().nullable().optional(),
-  dueDate:     z.string().nullable().optional(),
-  order:       z.number().optional(),
-})
 
 async function isProjectMember(projectId: string, userId: string) {
   const project = await Project.findById(projectId).select('members').lean()
   return isMember(project, userId)
+}
+
+/** The project itself, when the caller belongs to it — needed to check assignees. */
+async function projectForMember(projectId: string, userId: string) {
+  const project = await Project.findById(projectId).select('members').lean()
+  return project && isMember(project, userId) ? project : null
 }
 
 // PATCH /api/projects/[id]/tasks/[taskId]
@@ -35,9 +31,15 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     await connectDB()
 
-    if (!await isProjectMember(params.id, session.user.id)) {
+    const project = await projectForMember(params.id, session.user.id)
+    if (!project) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
+
+    const existing = await Task.findOne({ _id: params.taskId, projectId: params.id })
+      .select('assigneeId')
+      .lean()
+    const previousAssignee = existing?.assigneeId?.toString()
 
     const body   = await req.json()
     const parsed = updateTaskSchema.safeParse(body)
@@ -45,9 +47,20 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
     }
 
-    const updateData: Record<string, unknown> = { ...parsed.data }
+    if (parsed.data.assigneeId && !isMember(project, parsed.data.assigneeId)) {
+      return NextResponse.json(
+        { error: { fieldErrors: { assigneeId: ['That person is not a member of this project'] } } },
+        { status: 422 }
+      )
+    }
+
+    // null clears a field; undefined was never sent and is left alone.
+    const updateData: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(parsed.data)) {
+      if (value !== undefined) updateData[key] = value
+    }
     if (parsed.data.dueDate) updateData.dueDate = new Date(parsed.data.dueDate)
-    if (parsed.data.dueDate === null) updateData.dueDate = null
+    if (parsed.data.description === null) updateData.description = ''
 
     const task = await Task.findOneAndUpdate(
       { _id: params.taskId, projectId: params.id },
@@ -65,12 +78,16 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     // Emit via Socket.io
     global.io?.to(`project:${params.id}`).emit('task-updated', task)
 
+    // Announce a *new* assignee, not every save that happens to carry one.
+    const newAssignee = parsed.data.assigneeId ?? null
+
     if (
-      parsed.data.assigneeId &&
-      parsed.data.assigneeId !== session.user.id
+      newAssignee &&
+      newAssignee !== previousAssignee &&
+      newAssignee !== session.user.id
     ) {
       await createNotifications({
-        userIds: [parsed.data.assigneeId],
+        userIds: [newAssignee],
         type:    'task-assigned',
         title:   'You were assigned a task',
         body:    `You've been assigned: "${task.title}"`,

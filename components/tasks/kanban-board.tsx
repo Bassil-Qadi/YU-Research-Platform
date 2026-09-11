@@ -449,6 +449,7 @@ export function KanbanBoard({
     <TaskDetailDialog
       task={openTask}
       projectId={projectId}
+      members={members}
       open={!!openTask}
       onOpenChange={(open) => { if (!open) setOpenTaskId(null); }}
     />

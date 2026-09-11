@@ -5,24 +5,21 @@ import Project from '@/lib/db/models/Project'
 import Task from '@/lib/db/models/Task'
 import TaskComment from '@/lib/db/models/TaskComment'
 import mongoose from 'mongoose'
-import { z } from 'zod'
 import { createNotifications } from '@/lib/notifications'
 import { isMember } from '@/lib/projects/membership'
+import { createTaskSchema } from '@/lib/validations/task'
 
 type Params = { params: { id: string } }
-
-const createTaskSchema = z.object({
-  title:       z.string().trim().min(1).max(300),
-  description: z.string().max(2000).optional(),
-  status:      z.enum(['todo', 'in-progress', 'in-review', 'done']).default('todo'),
-  priority:    z.enum(['low', 'medium', 'high']).default('medium'),
-  assigneeId:  z.string().optional(),
-  dueDate:     z.string().optional(),
-})
 
 async function isProjectMember(projectId: string, userId: string) {
   const project = await Project.findById(projectId).select('members').lean()
   return isMember(project, userId)
+}
+
+/** The project itself, when the caller belongs to it — needed to check assignees. */
+async function projectForMember(projectId: string, userId: string) {
+  const project = await Project.findById(projectId).select('members').lean()
+  return project && isMember(project, userId) ? project : null
 }
 
 // GET /api/projects/[id]/tasks
@@ -77,7 +74,8 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     await connectDB()
 
-    if (!await isProjectMember(params.id, session.user.id)) {
+    const project = await projectForMember(params.id, session.user.id)
+    if (!project) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -85,6 +83,14 @@ export async function POST(req: NextRequest, { params }: Params) {
     const parsed = createTaskSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
+    }
+
+    // Work can only be handed to someone on the project.
+    if (parsed.data.assigneeId && !isMember(project, parsed.data.assigneeId)) {
+      return NextResponse.json(
+        { error: { fieldErrors: { assigneeId: ['That person is not a member of this project'] } } },
+        { status: 422 }
+      )
     }
 
     // Set order to end of column

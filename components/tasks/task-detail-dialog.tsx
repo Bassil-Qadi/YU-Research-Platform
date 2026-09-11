@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { formatDistanceToNow } from 'date-fns'
 import { Calendar, Loader2, MessageSquare, Pencil, Send, Trash2 } from 'lucide-react'
+import { TaskEditForm } from '@/components/tasks/task-edit-form'
 import { errorMessage } from '@/lib/api'
 import { COLUMNS, type ITask } from '@/hooks/useProjectTasks'
 import {
@@ -127,10 +128,11 @@ function Comment({
 }
 
 export function TaskDetailDialog({
-  task, projectId, open, onOpenChange,
+  task, projectId, members, open, onOpenChange,
 }: {
   task:         ITask | null
   projectId:    string
+  members:      { _id: string; name: string }[]
   open:         boolean
   onOpenChange: (open: boolean) => void
 }) {
@@ -140,6 +142,7 @@ export function TaskDetailDialog({
 
   const [draft, setDraft] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
 
   const comments = data?.comments ?? []
@@ -148,10 +151,11 @@ export function TaskDetailDialog({
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [comments.length])
 
-  // A fresh task gets a fresh composer.
+  // A fresh task gets a fresh composer, and never inherits an open editor.
   useEffect(() => {
     setDraft('')
     setError(null)
+    setEditing(false)
   }, [task?._id])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -176,9 +180,23 @@ export function TaskDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[90vh] flex-col gap-0 p-0 sm:max-w-xl">
         <DialogHeader className="space-y-3 border-b border-border/60 p-6 pb-4">
-          <DialogTitle className="pr-6 font-display text-lg leading-snug">{task.title}</DialogTitle>
+          <div className="flex items-start justify-between gap-3">
+            <DialogTitle className="font-display text-lg leading-snug">{task.title}</DialogTitle>
+            {!editing && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mr-6 h-8 shrink-0 gap-1.5 rounded-lg text-xs"
+                onClick={() => setEditing(true)}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Edit
+              </Button>
+            )}
+          </div>
           <DialogDescription asChild>
-            <div className="flex flex-wrap items-center gap-2 text-xs">
+            <div className={editing ? 'hidden' : 'flex flex-wrap items-center gap-2 text-xs'}>
               {column && (
                 <Badge variant="secondary" className="gap-1.5 rounded-full">
                   <span className={`h-1.5 w-1.5 rounded-full ${column.color}`} />
@@ -205,6 +223,15 @@ export function TaskDetailDialog({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-6 pt-4">
+          {editing ? (
+            <TaskEditForm
+              task={task}
+              projectId={projectId}
+              members={members}
+              onDone={() => setEditing(false)}
+            />
+          ) : (
+          <>
           {task.description ? (
             <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{task.description}</p>
           ) : (
@@ -241,9 +268,11 @@ export function TaskDetailDialog({
             )}
             <div ref={endRef} />
           </div>
+          </>
+          )}
         </div>
 
-        <form onSubmit={handleSubmit} className="border-t border-border/60 p-4">
+        <form onSubmit={handleSubmit} className={editing ? 'hidden' : 'border-t border-border/60 p-4'}>
           {error && <p role="alert" className="mb-2 text-xs text-destructive">{error}</p>}
           <div className="flex items-end gap-2">
             <Textarea
