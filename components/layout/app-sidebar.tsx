@@ -18,7 +18,9 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        "hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex",
+        // The page itself scrolls, so the sidebar has to be pinned: without
+        // sticky it is just a one-viewport-tall block that scrolls away.
+        "hidden sticky top-0 h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex",
         "bg-gradient-to-b from-sidebar via-sidebar to-sidebar/95"
       )}
     >
