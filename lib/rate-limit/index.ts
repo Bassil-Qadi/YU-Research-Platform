@@ -30,6 +30,10 @@ export const RATE_LIMITS = {
   directMessage: { limit: 60, windowMs: 5 * 60 * 1000 },
   /** Comments notify everyone in the thread, so they get the same ceiling. */
   comment:       { limit: 60, windowMs: 5 * 60 * 1000 },
+  /** Sends mail to an address the caller chose, so it is kept tight. */
+  passwordReset: { limit: 5,  windowMs: 60 * 60 * 1000 },
+  /** Guessing a 32-byte token is hopeless, but there is no reason to allow it. */
+  passwordResetAttempt: { limit: 20, windowMs: 15 * 60 * 1000 },
 } as const satisfies Record<string, RateLimitRule>
 
 interface RateLimitState {

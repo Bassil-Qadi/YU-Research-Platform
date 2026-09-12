@@ -6,7 +6,15 @@ import type { UserRole } from "@/types";
 
 const { auth } = NextAuth(authConfig);
 
-const publicPaths = ["/", "/login", "/register"];
+// Signed out by definition: someone who has forgotten their password cannot
+// authenticate, so these have to be reachable without a session.
+const publicPaths = [
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+];
 
 /**
  * An API caller wants a status code it can act on, not a login page. Sending

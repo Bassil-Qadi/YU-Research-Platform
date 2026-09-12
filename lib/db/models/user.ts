@@ -34,6 +34,12 @@ const userSchema = new Schema(
     },
     avatar: { type: String },
     passwordHash: { type: String, select: false },
+    /**
+     * When the password last changed. Any session issued before this is
+     * refused at revalidation, so resetting a password turns out whoever was
+     * already signed in — the point of resetting it after a compromise.
+     */
+    passwordChangedAt: { type: Date },
   },
   { timestamps: true }
 );

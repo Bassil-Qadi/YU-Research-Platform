@@ -253,3 +253,39 @@ export function accountReinstated(name: string): EmailContent {
     text: `${lines.join('\n\n')}\n\n${appUrl()}/login`,
   }
 }
+
+export function passwordResetRequested(name: string, url: string, ttlMinutes: number): EmailContent {
+  const lines = [
+    `Hi ${name},`,
+    `Someone asked to reset the password for your ${PLATFORM.name} account. Use the link below to choose a new one. It expires in ${ttlMinutes} minutes and works once.`,
+    'If this was not you, you can ignore this email — your password has not changed.',
+  ]
+
+  return {
+    subject: 'Reset your password',
+    html: layout({
+      heading: 'Reset your password',
+      body:    lines.map(p).join(''),
+      cta:     { label: 'Choose a new password', href: url },
+    }),
+    text: `${lines.join('\n\n')}\n\n${url}`,
+  }
+}
+
+export function passwordChanged(name: string): EmailContent {
+  const lines = [
+    `Hi ${name},`,
+    'Your password has been changed, and anyone who was signed in with the old one has been signed out.',
+    'If this was not you, contact an administrator straight away — whoever did it has access to your email.',
+  ]
+
+  return {
+    subject: 'Your password was changed',
+    html: layout({
+      heading: 'Password changed',
+      body:    lines.map(p).join(''),
+      cta:     { label: 'Sign in', href: `${appUrl()}/login` },
+    }),
+    text: `${lines.join('\n\n')}\n\n${appUrl()}/login`,
+  }
+}

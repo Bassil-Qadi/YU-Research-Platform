@@ -114,9 +114,12 @@ function LoginForm() {
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
 
-            <span className="text-xs text-muted-foreground">
+            <Link
+              href="/forgot-password"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
               Forgot password?
-            </span>
+            </Link>
           </div>
 
           <Input

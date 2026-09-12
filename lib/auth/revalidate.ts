@@ -17,6 +17,9 @@ const REVALIDATE_AFTER_MS = 5 * 60 * 1000
  * Re-read the account behind a token and either refresh it or destroy it.
  * Returning null tells Auth.js the session is no longer valid.
  *
+ * A token is trusted for REVALIDATE_AFTER_MS, so a revoked session can survive
+ * that long; the same is already true of suspension.
+ *
  * Note this runs wherever the Node-side `auth()` runs — API routes and server
  * components. Middleware uses the edge-safe config and cannot reach the
  * database, so a revoked user may still be routed to a page; the first API call
@@ -35,11 +38,17 @@ export async function revalidateToken(token: JWT | null): Promise<JWT | null> {
     await connectDB()
 
     const user = await User.findById(userId)
-      .select('name email role status department universityId avatarUrl')
+      .select('name email role status department universityId avatarUrl passwordChangedAt')
       .lean()
 
     // Deleted, or no longer permitted to be here.
     if (!user || user.status !== 'active') return null
+
+    // Issued before the password changed: whoever holds it knew the old
+    // password, which is exactly who a reset is meant to lock out.
+    if (user.passwordChangedAt && typeof token.iat === 'number') {
+      if (user.passwordChangedAt.getTime() > token.iat * 1000) return null
+    }
 
     return {
       ...token,
