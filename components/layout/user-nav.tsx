@@ -32,7 +32,7 @@ export function UserNav() {
             name={user?.name ?? "?"}
             src={user?.image}
             className="h-8 w-8"
-            fallbackClassName="from-blue-600 to-violet-600"
+            fallbackClassName="from-green-600 to-teal-600"
           />
           <span className="hidden max-w-[120px] truncate text-sm font-medium md:inline">
             {user?.name?.split(" ")[0] ?? "Account"}

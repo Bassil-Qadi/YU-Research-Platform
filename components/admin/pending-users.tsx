@@ -91,7 +91,7 @@ export function PendingUsers() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="truncate text-sm font-medium">{user.name}</p>
-                    <Badge className="rounded-full bg-violet-500/15 text-violet-700 dark:text-violet-300 text-[10px]">
+                    <Badge className="rounded-full bg-teal-500/15 text-teal-700 dark:text-teal-300 text-[10px]">
                       {user.role}
                     </Badge>
                   </div>

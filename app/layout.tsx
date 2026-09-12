@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
+import { PLATFORM, UNIVERSITY, UNIVERSITY_LOCATION } from "@/lib/brand";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const plusJakarta = Plus_Jakarta_Sans({
@@ -11,9 +12,8 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Research Collaboration Platform",
-  description:
-    "University-wide platform for research discovery, teams, and collaboration.",
+  title: PLATFORM.name,
+  description: `Research discovery, teams and collaboration across ${UNIVERSITY.name}, ${UNIVERSITY_LOCATION}.`,
 };
 
 export default function RootLayout({

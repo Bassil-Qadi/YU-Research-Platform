@@ -1,16 +1,36 @@
 /**
- * The one list of departments. Registration, profiles, projects and every
- * filter read from here; before this there were three copies that disagreed,
- * so people in half the departments could not be found by filtering.
+ * Yarmouk University's faculties, as published at yu.edu.jo, in the university's
+ * own grouping: health, scientific, then humanities.
+ *
+ * This is the one list. Registration, profiles, projects and every filter read
+ * from here; before this there were three copies that disagreed, so people in
+ * half the departments could not be found by filtering.
+ *
+ * The field is still called `department` throughout the API and the database —
+ * only the values are Yarmouk's. Renaming the field would break stored records
+ * for no gain.
  */
 export const DEPARTMENTS = [
-  'School of Engineering',
-  'College of Natural Sciences',
-  'School of Social Sciences',
-  'School of Medicine',
-  'School of Business',
-  'College of Arts & Humanities',
-  'School of Education',
+  // Health
+  'Faculty of Medicine',
+  'Faculty of Pharmacy',
+  'Faculty of Nursing',
+  // Scientific
+  'Faculty of Science',
+  'Hijjawi Faculty for Engineering Technology',
+  'Faculty of Information Technology and Computer Science',
+  'Faculty of Technology',
+  // Humanities
+  'Faculty of Arts',
+  'Faculty of Business',
+  "Faculty of Al-Shari'a and Islamic Studies",
+  'Faculty of Educational Sciences',
+  'Faculty of Law',
+  'Faculty of Mass Communication',
+  'Faculty of Physical Education and Sport Sciences',
+  'Faculty of Archaeology and Anthropology',
+  'Faculty of Tourism and Hotels',
+  'Faculty of Fine Arts',
   'Other',
 ] as const
 

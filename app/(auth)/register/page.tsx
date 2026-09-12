@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { DEPARTMENTS } from '@/lib/departments'
+import { EMAIL_PLACEHOLDER, PLATFORM, UNIVERSITY, UNIVERSITY_LOCATION } from '@/lib/brand'
 
 const registerSchema = z.object({
   name:       z.string().min(2, 'Name must be at least 2 characters'),
@@ -105,23 +106,26 @@ export default function RegisterPage() {
     <div className="flex min-h-screen">
       {/* Brand panel */}
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden p-10 text-white lg:flex">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-700 via-indigo-800 to-violet-900 animate-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-br from-green-700 via-emerald-800 to-teal-900 animate-gradient" />
         <div className="mesh-bg-animated absolute inset-0 opacity-40" aria-hidden />
 
         <Link href="/" className="relative flex items-center gap-2.5">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
             <BookOpen className="h-5 w-5" />
           </div>
-          <span className="font-display text-lg font-bold">Research Platform</span>
+          <span className="flex flex-col leading-tight">
+            <span className="font-display text-lg font-bold">{UNIVERSITY.name}</span>
+            <span lang="ar" dir="rtl" className="text-xs text-white/70">{UNIVERSITY.nameArabic}</span>
+          </span>
         </Link>
 
         <div className="relative space-y-6">
           <h2 className="font-display text-4xl font-bold leading-tight tracking-tight">
-            Join your university research community
+            Join the {UNIVERSITY.name} research community
           </h2>
           <p className="max-w-md text-lg leading-relaxed text-white/80">
             Create your account to discover projects, connect with researchers,
-            and collaborate across departments.
+            and collaborate across faculties.
           </p>
           <div className="space-y-3">
             {[
@@ -138,7 +142,7 @@ export default function RegisterPage() {
         </div>
 
         <p className="relative text-sm text-white/50">
-          © Research Collaboration Platform
+          © {PLATFORM.name} · {UNIVERSITY_LOCATION}
         </p>
       </div>
 
@@ -152,10 +156,10 @@ export default function RegisterPage() {
         <Card className="relative z-10 w-full max-w-md border-border/60 shadow-elevated backdrop-blur-sm">
           <CardHeader className="space-y-1 pb-2">
             <div className="mb-2 flex items-center gap-2 lg:hidden">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-green-600 to-teal-600 text-white">
                 <BookOpen className="h-4 w-4" />
               </div>
-              <span className="font-display font-semibold">Research Platform</span>
+              <span className="font-display font-semibold">{UNIVERSITY.name}</span>
             </div>
             <CardTitle className="font-display text-2xl">Create account</CardTitle>
             <CardDescription>
@@ -187,12 +191,12 @@ export default function RegisterPage() {
 
               {/* Email */}
               <div className="space-y-1.5">
-                <Label htmlFor="email">University email</Label>
+                <Label htmlFor="email">{UNIVERSITY.name} email</Label>
                 <Input
                   id="email"
                   type="email"
                   {...register('email')}
-                  placeholder="you@university.edu"
+                  placeholder={EMAIL_PLACEHOLDER}
                   className="h-11 rounded-xl"
                 />
                 {errors.email && (

@@ -10,6 +10,7 @@ import { apiFetch, errorMessage } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { UNIVERSITY } from '@/lib/brand'
 import {
   Dialog, DialogContent, DialogDescription,
   DialogHeader, DialogTitle, DialogTrigger,
@@ -60,7 +61,7 @@ export function InviteMemberDialog({ projectId }: { projectId: string }) {
         <DialogHeader>
           <DialogTitle className="font-display">Invite a researcher</DialogTitle>
           <DialogDescription>
-            Enter their university email address to add them to this project.
+            Enter their {UNIVERSITY.name} email address to add them to this project.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
@@ -76,12 +77,12 @@ export function InviteMemberDialog({ projectId }: { projectId: string }) {
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="email">University email</Label>
+            <Label htmlFor="email">{UNIVERSITY.name} email</Label>
             <Input
               id="email"
               type="email"
               {...register('email')}
-              placeholder="colleague@university.edu"
+              placeholder={`colleague@${UNIVERSITY.emailDomain}`}
               className="rounded-xl"
             />
             {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}

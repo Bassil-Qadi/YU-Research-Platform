@@ -12,10 +12,11 @@ import {
 } from '@/components/ui/card'
 import { categoryAccents } from '@/lib/accents'
 import { cn } from '@/lib/utils'
+import { UNIVERSITY } from '@/lib/brand'
 
 const STATUS_STYLES: Record<string, string> = {
-  active:    'bg-blue-500/15 text-blue-700 dark:text-blue-300',
-  seeking:   'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+  active:    'bg-green-600/15 text-green-800 dark:text-green-300',
+  seeking:   'bg-teal-500/15 text-teal-700 dark:text-teal-300',
   paused:    'bg-amber-500/15 text-amber-700 dark:text-amber-300',
   completed: 'bg-slate-500/15 text-slate-700 dark:text-slate-300',
 }
@@ -58,7 +59,7 @@ export function DashboardStats({ role }: DashboardStatsProps) {
         <StatCard
           title="Your role"
           value={role}
-          description="University profile"
+          description={`${UNIVERSITY.name} profile`}
           icon={UserCircle}
           accent="profile"
         />
@@ -124,7 +125,7 @@ export function DashboardStats({ role }: DashboardStatsProps) {
                       className="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-muted/50"
                     >
                       <Avatar className="h-9 w-9 shrink-0">
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-semibold text-white">
+                        <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-600 text-xs font-semibold text-white">
                           {project.title.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>

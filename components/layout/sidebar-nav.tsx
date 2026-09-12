@@ -19,6 +19,7 @@ import { canAccessAdmin } from "@/lib/auth/rbac";
 import type { UserRole } from "@/types";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PLATFORM, UNIVERSITY } from '@/lib/brand'
 
 export const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -106,15 +107,15 @@ export function SidebarBrand() {
       href="/dashboard"
       className="group flex items-center gap-2.5 px-4 transition-opacity hover:opacity-90"
     >
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-white shadow-glow-sm transition-transform duration-300 group-hover:scale-105">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-green-600 to-teal-600 text-white shadow-glow-sm transition-transform duration-300 group-hover:scale-105">
         <BookOpen className="h-4 w-4" aria-hidden />
       </div>
       <div className="flex flex-col">
         <span className="font-display text-sm font-bold leading-tight tracking-tight">
-          Research Platform
+          {UNIVERSITY.name}
         </span>
         <span className="text-[10px] text-sidebar-foreground/60">
-          Collaboration Hub
+          {PLATFORM.short}
         </span>
       </div>
     </Link>

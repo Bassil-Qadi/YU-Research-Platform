@@ -30,14 +30,23 @@ const apply = process.argv.includes('--apply')
 const canonical = new Set<string>(DEPARTMENTS)
 
 /**
- * Free-text spellings from before the canonical list existed, mapped by hand.
+ * Spellings from before the list held Yarmouk's own faculties, mapped by hand.
  * Each entry is a decision someone made about where that department belongs,
  * not something the script could work out — so they live here in the open.
  * Keys are matched trimmed, whitespace-collapsed and lowercased.
  */
 const ALIASES: Record<string, string> = {
-  'computer sciencess': 'School of Engineering',
-  'computer science':   'School of Engineering',
+  // The generic placeholder list this platform shipped with.
+  'school of engineering':      'Hijjawi Faculty for Engineering Technology',
+  'college of natural sciences': 'Faculty of Science',
+  'school of social sciences':   'Faculty of Arts',
+  'school of medicine':          'Faculty of Medicine',
+  'school of business':          'Faculty of Business',
+  'college of arts & humanities': 'Faculty of Arts',
+  'school of education':         'Faculty of Educational Sciences',
+  // Typed by hand before any list existed.
+  'computer sciencess': 'Faculty of Information Technology and Computer Science',
+  'computer science':   'Faculty of Information Technology and Computer Science',
 }
 
 function resolve(value: string): string {

@@ -25,8 +25,8 @@ import { useUserProfile } from '@/hooks/useUserProfile'
 import { cn } from '@/lib/utils'
 
 const STATUS_STYLES: Record<string, string> = {
-  active:    'bg-blue-500/15 text-blue-700 dark:text-blue-300',
-  seeking:   'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+  active:    'bg-green-600/15 text-green-800 dark:text-green-300',
+  seeking:   'bg-teal-500/15 text-teal-700 dark:text-teal-300',
   paused:    'bg-amber-500/15 text-amber-700 dark:text-amber-300',
   completed: 'bg-slate-500/15 text-slate-700 dark:text-slate-300',
 }
@@ -66,7 +66,7 @@ export default function ProfilePage() {
     <PageContainer className="space-y-6">
       {/* Profile header */}
       <div className="animate-fade-up overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-        <div className="relative h-28 bg-gradient-to-r from-rose-500 via-violet-600 to-blue-600 md:h-36">
+        <div className="relative h-28 bg-gradient-to-r from-green-700 via-emerald-600 to-teal-600 md:h-36">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.15),transparent_60%)]" />
           <div className="mesh-bg absolute inset-0 opacity-30" aria-hidden />
         </div>
@@ -77,7 +77,7 @@ export default function ProfilePage() {
                 name={user.name}
                 src={user.avatarUrl}
                 className="-mt-12 h-24 w-24 border-4 border-card shadow-lg md:-mt-14 md:h-28 md:w-28"
-                fallbackClassName="from-rose-500 to-violet-600 text-2xl font-bold"
+                fallbackClassName="from-green-600 to-emerald-700 text-2xl font-bold"
               />
               <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">

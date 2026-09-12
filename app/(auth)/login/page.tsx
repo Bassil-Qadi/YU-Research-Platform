@@ -33,6 +33,7 @@ import {
   AUTH_ERROR_MESSAGES,
   DEFAULT_AUTH_ERROR_MESSAGE,
 } from "@/lib/auth/errors";
+import { EMAIL_PLACEHOLDER, PLATFORM, UNIVERSITY, UNIVERSITY_LOCATION } from "@/lib/brand";
 
 function LoginForm() {
   const router = useRouter();
@@ -95,17 +96,17 @@ function LoginForm() {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="email">University email</Label>
+          <Label htmlFor="email">{UNIVERSITY.name} email</Label>
 
           <Input
             id="email"
             type="email"
-            placeholder="you@university.edu"
+            placeholder={EMAIL_PLACEHOLDER}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            className="h-11 rounded-xl transition-shadow focus-visible:shadow-[0_0_0_3px] focus-visible:shadow-violet-500/20"
+            className="h-11 rounded-xl transition-shadow focus-visible:shadow-[0_0_0_3px] focus-visible:shadow-teal-500/20"
           />
         </div>
 
@@ -125,7 +126,7 @@ function LoginForm() {
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="current-password"
-            className="h-11 rounded-xl transition-shadow focus-visible:shadow-[0_0_0_3px] focus-visible:shadow-violet-500/20"
+            className="h-11 rounded-xl transition-shadow focus-visible:shadow-[0_0_0_3px] focus-visible:shadow-teal-500/20"
           />
         </div>
 
@@ -179,7 +180,7 @@ export default function LoginPage() {
       {/* Brand panel — desktop only */}
 
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden p-10 text-white lg:flex">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-700 via-indigo-800 to-violet-900 animate-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-br from-green-700 via-emerald-800 to-teal-900 animate-gradient" />
 
         <div
           className="mesh-bg-animated absolute inset-0 opacity-40"
@@ -187,12 +188,12 @@ export default function LoginPage() {
         />
 
         <div
-          className="pointer-events-none absolute -left-20 top-1/4 h-80 w-80 rounded-full bg-blue-400/30 blur-3xl animate-float-slow"
+          className="pointer-events-none absolute -left-20 top-1/4 h-80 w-80 rounded-full bg-green-500/30 blur-3xl animate-float-slow"
           aria-hidden
         />
 
         <div
-          className="pointer-events-none absolute -right-10 bottom-1/4 h-64 w-64 rounded-full bg-violet-400/25 blur-3xl animate-float"
+          className="pointer-events-none absolute -right-10 bottom-1/4 h-64 w-64 rounded-full bg-teal-400/25 blur-3xl animate-float"
           aria-hidden
         />
 
@@ -201,29 +202,30 @@ export default function LoginPage() {
             <BookOpen className="h-5 w-5" aria-hidden />
           </div>
 
-          <span className="font-display text-lg font-bold">
-            Research Platform
+          <span className="flex flex-col leading-tight">
+            <span className="font-display text-lg font-bold">{UNIVERSITY.name}</span>
+            <span lang="ar" dir="rtl" className="text-xs text-white/70">{UNIVERSITY.nameArabic}</span>
           </span>
         </Link>
 
         <div className="relative space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm backdrop-blur-sm">
             <Sparkles className="h-3.5 w-3.5" aria-hidden />
-            Built for university research teams
+            Built for {UNIVERSITY.name} research teams
           </div>
 
           <h2 className="font-display text-4xl font-bold leading-tight tracking-tight">
-            Your university research workspace
+            Your {UNIVERSITY.short} research workspace
           </h2>
 
           <p className="max-w-md text-lg leading-relaxed text-white/80">
             Sign in to discover projects, connect with researchers, and
-            collaborate across departments — all in one secure platform.
+            collaborate across faculties — all in one secure platform.
           </p>
         </div>
 
         <p className="relative text-sm text-white/50">
-          © Research Collaboration Platform
+          © {PLATFORM.name} · {UNIVERSITY_LOCATION}
         </p>
       </div>
 
@@ -239,12 +241,12 @@ export default function LoginPage() {
         <Card className="relative z-10 w-full max-w-md animate-fade-up border-border/60 shadow-elevated backdrop-blur-sm">
           <CardHeader className="space-y-1 pb-2">
             <div className="mb-2 flex items-center gap-2 lg:hidden">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-green-600 to-teal-600 text-white">
                 <BookOpen className="h-4 w-4" aria-hidden />
               </div>
 
               <span className="font-display font-semibold">
-                Research Platform
+                {UNIVERSITY.name}
               </span>
             </div>
 
@@ -253,8 +255,8 @@ export default function LoginPage() {
             </CardTitle>
 
             <CardDescription>
-              Sign in with your university credentials to access your research
-              workspace.
+              Sign in with your {UNIVERSITY.name} credentials to access your
+              research workspace.
             </CardDescription>
           </CardHeader>
 

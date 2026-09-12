@@ -33,10 +33,10 @@ const STATUS_STYLES: Record<UserStatus, string> = {
 
 const ROLE_STYLES: Record<string, string> = {
   Admin:      'bg-red-500/15 text-red-700 dark:text-red-300',
-  Faculty:    'bg-violet-500/15 text-violet-700 dark:text-violet-300',
-  Researcher: 'bg-teal-500/15 text-teal-700 dark:text-teal-300',
+  Faculty:    'bg-teal-500/15 text-teal-700 dark:text-teal-300',
+  Researcher: 'bg-lime-600/15 text-lime-800 dark:text-lime-300',
   Staff:      'bg-amber-500/15 text-amber-700 dark:text-amber-300',
-  Student:    'bg-blue-500/15 text-blue-700 dark:text-blue-300',
+  Student:    'bg-green-600/15 text-green-800 dark:text-green-300',
 }
 
 function UserRow({ user, isSelf }: { user: AdminUser; isSelf: boolean }) {

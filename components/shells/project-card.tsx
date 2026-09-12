@@ -30,11 +30,11 @@ const statusStyles: Record<
 > = {
   active: {
     label: "Active",
-    className: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/20",
+    className: "bg-green-600/15 text-green-800 dark:text-green-300 border-green-600/20",
   },
   recruiting: {
     label: "Recruiting",
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
+    className: "bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/20",
   },
   completed: {
     label: "Completed",
@@ -50,11 +50,13 @@ const statusStyles: Record<
   },
 };
 
+// Cover art, picked deterministically per project. All four stay inside
+// Yarmouk's green so a wall of cards reads as one palette.
 const defaultGradients = [
-  "from-blue-600 via-indigo-600 to-violet-700",
-  "from-teal-600 via-cyan-600 to-blue-700",
-  "from-violet-600 via-purple-600 to-fuchsia-700",
-  "from-amber-500 via-orange-500 to-rose-600",
+  "from-green-600 via-emerald-600 to-teal-700",
+  "from-emerald-500 via-teal-600 to-green-800",
+  "from-teal-600 via-emerald-600 to-lime-700",
+  "from-lime-600 via-green-600 to-emerald-800",
 ];
 
 export function ProjectCard({
@@ -80,7 +82,7 @@ export function ProjectCard({
     <Link href={`/projects/${id}`} className="group block">
       <Card
         className={cn(
-          "card-interactive h-full overflow-hidden border-border/60 shadow-sm hover:border-blue-500/30 hover:shadow-glow-sm",
+          "card-interactive h-full overflow-hidden border-border/60 shadow-sm hover:border-green-600/30 hover:shadow-glow-sm",
           className
         )}
       >
@@ -101,7 +103,7 @@ export function ProjectCard({
           </div>
         </div>
         <CardHeader className="pb-2 pt-4">
-          <CardTitle className="line-clamp-1 text-base transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">
+          <CardTitle className="line-clamp-1 text-base transition-colors group-hover:text-green-700 dark:group-hover:text-green-400">
             {title}
           </CardTitle>
           {department && (

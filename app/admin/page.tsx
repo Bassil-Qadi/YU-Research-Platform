@@ -21,26 +21,26 @@ import { PendingUsers } from '@/components/admin/pending-users'
 import { UserManagement } from '@/components/admin/user-management'
 
 const STATUS_STYLES: Record<string, string> = {
-  active:    'bg-blue-500/15 text-blue-700 dark:text-blue-300',
-  seeking:   'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+  active:    'bg-green-600/15 text-green-800 dark:text-green-300',
+  seeking:   'bg-teal-500/15 text-teal-700 dark:text-teal-300',
   paused:    'bg-amber-500/15 text-amber-700 dark:text-amber-300',
   completed: 'bg-slate-500/15 text-slate-700 dark:text-slate-300',
 }
 
 const ROLE_STYLES: Record<string, string> = {
   Admin:   'bg-red-500/15 text-red-700 dark:text-red-300',
-  Faculty: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
-  Student: 'bg-blue-500/15 text-blue-700 dark:text-blue-300',
+  Faculty: 'bg-teal-500/15 text-teal-700 dark:text-teal-300',
+  Student: 'bg-green-600/15 text-green-800 dark:text-green-300',
   Staff:   'bg-amber-500/15 text-amber-700 dark:text-amber-300',
-  Researcher: 'bg-green-500/15 text-green-700 dark:text-green-300',
+  Researcher: 'bg-lime-600/15 text-lime-800 dark:text-lime-300',
 }
 
 const DEPT_COLORS = [
-  'bg-blue-500',
-  'bg-violet-500',
+  'bg-green-600',
+  'bg-teal-500',
   'bg-emerald-500',
+  'bg-lime-600',
   'bg-amber-500',
-  'bg-green-500',
 ]
 
 export default function AdminPage() {
@@ -151,7 +151,7 @@ export default function AdminPage() {
                       </div>
                       <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                         <div
-                          className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                          className="h-full rounded-full bg-green-600 transition-all duration-500"
                           style={{ width: `${pct}%` }}
                         />
                       </div>

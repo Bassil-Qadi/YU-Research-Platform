@@ -4,12 +4,12 @@ import { containsInsensitive, equalsInsensitive, escapeRegex } from '@/lib/regex
 
 describe('normaliseDepartment', () => {
   it('snaps a case variant to the canonical spelling', () => {
-    expect(normaliseDepartment('school of engineering')).toBe('School of Engineering')
-    expect(normaliseDepartment('SCHOOL OF MEDICINE')).toBe('School of Medicine')
+    expect(normaliseDepartment('hijjawi faculty for engineering technology')).toBe('Hijjawi Faculty for Engineering Technology')
+    expect(normaliseDepartment('FACULTY OF MEDICINE')).toBe('Faculty of Medicine')
   })
 
   it('tidies whitespace before matching', () => {
-    expect(normaliseDepartment('  School   of  Engineering ')).toBe('School of Engineering')
+    expect(normaliseDepartment('  Faculty   of  Medicine ')).toBe('Faculty of Medicine')
   })
 
   it('keeps an unlisted department as written rather than rejecting it', () => {
@@ -27,8 +27,8 @@ describe('departmentOptions', () => {
   })
 
   it('does not list a case variant of a canonical department twice', () => {
-    const options = departmentOptions(['school of engineering', 'School of Engineering'])
-    expect(options.filter((o) => o.toLowerCase() === 'school of engineering')).toEqual(['School of Engineering'])
+    const options = departmentOptions(['faculty of medicine', 'Faculty of Medicine'])
+    expect(options.filter((o) => o.toLowerCase() === 'faculty of medicine')).toEqual(['Faculty of Medicine'])
   })
 
   it('merges case variants of an unlisted department too', () => {
@@ -60,8 +60,8 @@ describe('regex helpers', () => {
   })
 
   it('matches a whole label regardless of case', () => {
-    expect(equalsInsensitive('School of Engineering').test('school of engineering')).toBe(true)
+    expect(equalsInsensitive('Hijjawi Faculty for Engineering Technology').test('hijjawi faculty for engineering technology')).toBe(true)
     // Whole value only: a department is not "found" by a prefix of its name.
-    expect(equalsInsensitive('School').test('School of Engineering')).toBe(false)
+    expect(equalsInsensitive('Faculty').test('Hijjawi Faculty for Engineering Technology')).toBe(false)
   })
 })

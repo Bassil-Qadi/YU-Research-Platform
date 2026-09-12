@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { PLATFORM } from '@/lib/brand'
 
 /**
  * Transactional email via Resend.
@@ -28,7 +29,7 @@ export function isEmailConfigured(): boolean {
  * Point EMAIL_FROM at your own verified domain to send to anyone else.
  */
 export function emailFrom(): string {
-  return process.env.EMAIL_FROM ?? 'Research Platform <onboarding@resend.dev>'
+  return process.env.EMAIL_FROM ?? `${PLATFORM.name} <onboarding@resend.dev>`
 }
 
 export function appUrl(): string {

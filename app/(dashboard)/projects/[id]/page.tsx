@@ -43,15 +43,15 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 const ROLE_GRADIENTS: Record<string, string> = {
-  'pi': 'from-violet-500 to-purple-600',
-  'co-pi': 'from-blue-500 to-indigo-600',
+  'pi': 'from-teal-500 to-emerald-600',
+  'co-pi': 'from-green-500 to-emerald-600',
   'contributor': 'from-teal-500 to-emerald-600',
   'observer': 'from-slate-400 to-slate-500',
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  active: 'bg-blue-500/15 text-blue-700 dark:text-blue-300',
-  seeking: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+  active: 'bg-green-600/15 text-green-800 dark:text-green-300',
+  seeking: 'bg-teal-500/15 text-teal-700 dark:text-teal-300',
   paused: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
   completed: 'bg-slate-500/15 text-slate-700 dark:text-slate-300',
 }
@@ -281,7 +281,7 @@ export default function ProjectDetailPage() {
                     return (
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-xs font-semibold text-white">
+                          <AvatarFallback className="bg-gradient-to-br from-teal-500 to-emerald-600 text-xs font-semibold text-white">
                             {initials}
                           </AvatarFallback>
                         </Avatar>
