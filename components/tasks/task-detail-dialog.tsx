@@ -3,12 +3,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { formatDistanceToNow } from 'date-fns'
-import { Calendar, Loader2, MessageSquare, Pencil, Send, Trash2 } from 'lucide-react'
+import {
+  Calendar, FileText, ImageIcon, Loader2, MessageSquare, Paperclip,
+  Pencil, Send, Trash2, X,
+} from 'lucide-react'
 import { TaskEditForm } from '@/components/tasks/task-edit-form'
 import { errorMessage } from '@/lib/api'
+import { MAX_UPLOAD_BYTES, formatBytes } from '@/lib/utils'
 import { COLUMNS, type ITask } from '@/hooks/useProjectTasks'
 import {
-  useTaskComments, useTaskCommentActions, type TaskCommentItem,
+  useTaskComments, useTaskCommentActions,
+  type TaskCommentAttachment, type TaskCommentItem,
 } from '@/hooks/useTaskComments'
 import { UserAvatar } from '@/components/ui/user-avatar'
 import { Badge } from '@/components/ui/badge'
@@ -20,6 +25,43 @@ import {
 } from '@/components/ui/dialog'
 
 const MAX_LENGTH = 2000
+
+function Attachment({ attachment }: { attachment: TaskCommentAttachment }) {
+  const isImage = attachment.resourceType === 'image'
+
+  if (isImage) {
+    return (
+      <a
+        href={attachment.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-2 block w-fit overflow-hidden rounded-xl border border-border/60"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={attachment.url}
+          alt={attachment.name}
+          className="max-h-56 w-auto max-w-full object-contain"
+        />
+      </a>
+    )
+  }
+
+  return (
+    <a
+      href={attachment.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-2 flex w-fit max-w-full items-center gap-2 rounded-xl border border-border/60 px-3 py-2 transition-colors hover:bg-muted"
+    >
+      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+      <span className="min-w-0 flex-1 truncate text-sm">{attachment.name}</span>
+      <span className="shrink-0 text-xs text-muted-foreground">
+        {formatBytes(attachment.bytes)}
+      </span>
+    </a>
+  )
+}
 
 function Comment({
   comment, projectId, taskId, mine, canModerate,
@@ -116,9 +158,14 @@ function Comment({
             </div>
           </div>
         ) : (
-          <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-foreground/90">
-            {comment.content}
-          </p>
+          <>
+            {comment.content && (
+              <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-foreground/90">
+                {comment.content}
+              </p>
+            )}
+            {comment.attachment && <Attachment attachment={comment.attachment} />}
+          </>
         )}
 
         {error && <p role="alert" className="mt-1 text-xs text-destructive">{error}</p>}
@@ -143,7 +190,9 @@ export function TaskDetailDialog({
   const [draft, setDraft] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
-  const endRef = useRef<HTMLDivElement>(null)
+  const [file, setFile] = useState<File | null>(null)
+  const endRef   = useRef<HTMLDivElement>(null)
+  const fileRef  = useRef<HTMLInputElement>(null)
 
   const comments = data?.comments ?? []
 
@@ -156,19 +205,41 @@ export function TaskDetailDialog({
     setDraft('')
     setError(null)
     setEditing(false)
+    clearFile()
   }, [task?._id])
+
+  function clearFile() {
+    setFile(null)
+    // Let the same file be picked again after removing it.
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  function pickFile(chosen: File | null) {
+    if (!chosen) return
+    if (chosen.size > MAX_UPLOAD_BYTES) {
+      setError(`That file is ${formatBytes(chosen.size)}. The limit is ${formatBytes(MAX_UPLOAD_BYTES)}.`)
+      clearFile()
+      return
+    }
+    setError(null)
+    setFile(chosen)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const text = draft.trim()
-    if (!text) return
+    // A file on its own is a comment; so is text on its own.
+    if (!text && !file) return
 
+    const sent = file
     setError(null)
     setDraft('')
+    clearFile()
     try {
-      await add.mutateAsync(text)
+      await add.mutateAsync({ content: text, file: sent })
     } catch (err) {
       setDraft(text) // keep what they wrote rather than losing it
+      setFile(sent)  // and what they picked
       setError(errorMessage(err, 'Could not post your comment'))
     }
   }
@@ -274,7 +345,44 @@ export function TaskDetailDialog({
 
         <form onSubmit={handleSubmit} className={editing ? 'hidden' : 'border-t border-border/60 p-4'}>
           {error && <p role="alert" className="mb-2 text-xs text-destructive">{error}</p>}
+
+          {file && (
+            <div className="mb-2 flex w-fit max-w-full items-center gap-2 rounded-lg border border-border/60 bg-muted/50 px-2.5 py-1.5">
+              {file.type.startsWith('image/')
+                ? <ImageIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                : <FileText  className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />}
+              <span className="min-w-0 flex-1 truncate text-xs">{file.name}</span>
+              <span className="shrink-0 text-[11px] text-muted-foreground">{formatBytes(file.size)}</span>
+              <button
+                type="button"
+                onClick={clearFile}
+                className="rounded p-0.5 text-muted-foreground hover:text-destructive"
+                aria-label="Remove attachment"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
+          <input
+            ref={fileRef}
+            type="file"
+            className="hidden"
+            onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+          />
+
           <div className="flex items-end gap-2">
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              className="shrink-0 rounded-xl"
+              onClick={() => fileRef.current?.click()}
+              disabled={add.isPending}
+              aria-label="Attach a file"
+            >
+              <Paperclip className="h-4 w-4" />
+            </Button>
             <Textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -285,13 +393,13 @@ export function TaskDetailDialog({
                   e.currentTarget.form?.requestSubmit()
                 }
               }}
-              placeholder="Add a comment… (Enter to post, Shift+Enter for a new line)"
+              placeholder="Add a comment or attach a file… (Enter to post, Shift+Enter for a new line)"
               rows={2}
               maxLength={MAX_LENGTH}
               className="min-h-0 resize-none rounded-xl text-sm"
               aria-label="Add a comment"
             />
-            <Button type="submit" size="icon" className="shrink-0 rounded-xl" disabled={add.isPending || !draft.trim()} aria-label="Post comment">
+            <Button type="submit" size="icon" className="shrink-0 rounded-xl" disabled={add.isPending || (!draft.trim() && !file)} aria-label="Post comment">
               {add.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </div>

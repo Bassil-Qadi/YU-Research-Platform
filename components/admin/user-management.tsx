@@ -23,21 +23,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
-
-const STATUS_STYLES: Record<UserStatus, string> = {
-  active:    'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
-  pending:   'bg-amber-500/15 text-amber-700 dark:text-amber-300',
-  rejected:  'bg-slate-500/15 text-slate-700 dark:text-slate-300',
-  suspended: 'bg-red-500/15 text-red-700 dark:text-red-300',
-}
-
-const ROLE_STYLES: Record<string, string> = {
-  Admin:      'bg-red-500/15 text-red-700 dark:text-red-300',
-  Faculty:    'bg-teal-500/15 text-teal-700 dark:text-teal-300',
-  Researcher: 'bg-lime-600/15 text-lime-800 dark:text-lime-300',
-  Staff:      'bg-amber-500/15 text-amber-700 dark:text-amber-300',
-  Student:    'bg-green-600/15 text-green-800 dark:text-green-300',
-}
+import {
+  ROLE_STYLES, USER_STATUS_STYLES as STATUS_STYLES,
+} from '@/lib/status-styles'
 
 function UserRow({ user, isSelf }: { user: AdminUser; isSelf: boolean }) {
   const update = useUpdateAdminUser()

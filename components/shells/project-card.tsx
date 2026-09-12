@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { PROJECT_STATUS_STYLES } from "@/lib/status-styles";
 
 export interface ProjectCardProps {
   id: string;
@@ -24,17 +25,19 @@ export interface ProjectCardProps {
   className?: string;
 }
 
+// The card has its own vocabulary — projects/page maps the model's status onto
+// it — but the colours come from the shared map so the two cannot drift apart.
 const statusStyles: Record<
   NonNullable<ProjectCardProps["status"]>,
   { label: string; className: string }
 > = {
   active: {
     label: "Active",
-    className: "bg-green-600/15 text-green-800 dark:text-green-300 border-green-600/20",
+    className: cn(PROJECT_STATUS_STYLES.active, "border-green-600/20"),
   },
   recruiting: {
     label: "Recruiting",
-    className: "bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/20",
+    className: cn(PROJECT_STATUS_STYLES.seeking, "border-teal-500/20"),
   },
   completed: {
     label: "Completed",
@@ -42,8 +45,9 @@ const statusStyles: Record<
   },
   paused: {
     label: "Paused",
-    className: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/20",
+    className: cn(PROJECT_STATUS_STYLES.paused, "border-amber-500/20"),
   },
+  // No counterpart in the model, so it keeps its own colour.
   draft: {
     label: "Draft",
     className: "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-500/20",

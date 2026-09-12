@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
 import Task from '@/lib/db/models/Task'
 import TaskComment from '@/lib/db/models/TaskComment'
+import { deleteFile } from '@/lib/storage'
 import { createNotifications } from '@/lib/notifications'
 import { isMember } from '@/lib/projects/membership'
 import { updateTaskSchema } from '@/lib/validations/task'
@@ -125,7 +126,20 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
 
+    // Collect before deleting: afterwards there is nothing left to read.
+    const attached = await TaskComment.find({
+      taskId: params.taskId, attachment: { $exists: true },
+    })
+      .select('attachment')
+      .lean()
+
     await TaskComment.deleteMany({ taskId: params.taskId })
+
+    await Promise.all(
+      attached.flatMap((c) =>
+        c.attachment ? [deleteFile(c.attachment.publicId, c.attachment.resourceType)] : []
+      )
+    )
 
     global.io?.to(`project:${params.id}`).emit('task-deleted', { taskId: params.taskId })
 

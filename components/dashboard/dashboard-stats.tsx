@@ -12,14 +12,8 @@ import {
 } from '@/components/ui/card'
 import { categoryAccents } from '@/lib/accents'
 import { cn } from '@/lib/utils'
+import { PROJECT_STATUS_STYLES as STATUS_STYLES } from '@/lib/status-styles'
 import { UNIVERSITY } from '@/lib/brand'
-
-const STATUS_STYLES: Record<string, string> = {
-  active:    'bg-green-600/15 text-green-800 dark:text-green-300',
-  seeking:   'bg-teal-500/15 text-teal-700 dark:text-teal-300',
-  paused:    'bg-amber-500/15 text-amber-700 dark:text-amber-300',
-  completed: 'bg-slate-500/15 text-slate-700 dark:text-slate-300',
-}
 
 const quickActions = [
   {

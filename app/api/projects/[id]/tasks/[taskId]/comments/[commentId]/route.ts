@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
 import TaskComment from '@/lib/db/models/TaskComment'
+import { deleteFile } from '@/lib/storage'
 import { taskForMember } from '@/lib/projects/task-access'
 import { commentSchema } from '@/lib/validations/project'
 
@@ -91,7 +92,14 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    const { attachment } = comment
     await comment.deleteOne()
+
+    // The row goes first: an orphaned file is a smaller problem than a comment
+    // pointing at a file that is no longer there. deleteFile tolerates a miss.
+    if (attachment) {
+      await deleteFile(attachment.publicId, attachment.resourceType)
+    }
 
     global.io?.to(`project:${params.id}`).emit('task-comment:deleted', {
       taskId:    params.taskId,

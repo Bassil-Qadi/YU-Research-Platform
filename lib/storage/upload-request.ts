@@ -32,7 +32,7 @@ function formatBytes(bytes: number): string {
  */
 export async function readUploadedFile(
   req: NextRequest,
-  { allowedTypes, maxBytes = MAX_UPLOAD_BYTES, field = 'file' }: ReadUploadOptions
+  options: ReadUploadOptions
 ): Promise<ReadUploadResult> {
   let formData: FormData
   try {
@@ -41,6 +41,18 @@ export async function readUploadedFile(
     return { ok: false, error: 'Expected a multipart form upload', status: 400 }
   }
 
+  return readUploadedFileFrom(formData, options)
+}
+
+/**
+ * The same checks against a form that has already been read — a request body
+ * can only be consumed once, so a route needing other fields alongside the
+ * file (a comment and its attachment, say) parses the form and calls this.
+ */
+export async function readUploadedFileFrom(
+  formData: FormData,
+  { allowedTypes, maxBytes = MAX_UPLOAD_BYTES, field = 'file' }: ReadUploadOptions
+): Promise<ReadUploadResult> {
   const entry = formData.get(field)
   if (!entry || typeof entry === 'string') {
     return { ok: false, error: `No file provided in "${field}"`, status: 400 }

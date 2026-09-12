@@ -3,10 +3,20 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { getSocket, joinProjectRoom } from '@/lib/socket-client'
 
+export interface TaskCommentAttachment {
+  name:         string
+  url:          string
+  bytes:        number
+  contentType:  string
+  resourceType: 'image' | 'raw'
+}
+
 export interface TaskCommentItem {
   _id:       string
   taskId:    string
+  /** Empty when the comment is nothing but its attachment. */
   content:   string
+  attachment?: TaskCommentAttachment
   createdAt: string
   editedAt?: string
   authorId: {
@@ -80,9 +90,22 @@ export function useTaskCommentActions(projectId: string, taskId: string) {
   // the socket is down, so a post never silently fails to appear.
   const refresh = () => queryClient.invalidateQueries({ queryKey: key(taskId) })
 
+  // Text alone goes as JSON; a file rides along with it in one multipart
+  // request, so an upload cannot succeed while its comment fails.
   const add = useMutation({
-    mutationFn: (content: string) =>
-      apiFetch<TaskCommentItem>(base, { method: 'POST', body: JSON.stringify({ content }) }),
+    mutationFn: ({ content, file }: { content: string; file?: File | null }) => {
+      if (!file) {
+        return apiFetch<TaskCommentItem>(base, {
+          method: 'POST',
+          body:   JSON.stringify({ content }),
+        })
+      }
+
+      const form = new FormData()
+      form.append('content', content)
+      form.append('file', file)
+      return apiFetch<TaskCommentItem>(base, { method: 'POST', body: form })
+    },
     onSuccess: refresh,
   })
 

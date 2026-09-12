@@ -7,6 +7,8 @@ import { apiFetch, errorMessage } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
+import { ROLE_STYLES, UNKNOWN_BADGE } from '@/lib/status-styles'
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card'
@@ -91,7 +93,7 @@ export function PendingUsers() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="truncate text-sm font-medium">{user.name}</p>
-                    <Badge className="rounded-full bg-teal-500/15 text-teal-700 dark:text-teal-300 text-[10px]">
+                    <Badge className={cn('rounded-full text-[10px]', ROLE_STYLES[user.role] ?? UNKNOWN_BADGE)}>
                       {user.role}
                     </Badge>
                   </div>

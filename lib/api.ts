@@ -10,11 +10,15 @@ export class ApiError extends Error {
   }
 
   export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
+    // The browser sets multipart's Content-Type itself, boundary and all —
+    // declaring JSON over a FormData body makes it unparseable on the server.
+    const isForm = typeof FormData !== 'undefined' && options?.body instanceof FormData
+
     const res = await fetch(url, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,  
+        ...(isForm ? {} : { 'Content-Type': 'application/json' }),
+        ...options?.headers,
       },
     })
   

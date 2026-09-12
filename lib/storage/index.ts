@@ -25,8 +25,9 @@ export interface UploadOptions {
   resourceType?: StorageResourceType
 }
 
-/** Ceiling that matches Cloudinary's free tier for both images and raw files. */
-export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+// Defined in lib/utils so client components can check a size before uploading
+// without importing this module, which pulls in the Cloudinary SDK.
+export { MAX_UPLOAD_BYTES } from '@/lib/utils'
 
 export const ALLOWED_IMAGE_TYPES = [
   'image/jpeg',

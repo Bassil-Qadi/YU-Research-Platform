@@ -141,6 +141,13 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       .select('publicId resourceType')
       .lean()
 
+    // Comment attachments are stored the same way and need the same sweep.
+    const attached = await TaskComment.find({
+      projectId: params.id, attachment: { $exists: true },
+    })
+      .select('attachment')
+      .lean()
+
     await Promise.all([
       Task.deleteMany({ projectId: params.id }),
       Message.deleteMany({ projectId: params.id }),
@@ -152,7 +159,12 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     await Project.findByIdAndDelete(params.id)
 
     // Storage last: a leftover blob is recoverable, a dangling record is not.
-    await Promise.all(files.map((f) => deleteFile(f.publicId, f.resourceType)))
+    await Promise.all([
+      ...files.map((f) => deleteFile(f.publicId, f.resourceType)),
+      ...attached.flatMap((c) =>
+        c.attachment ? [deleteFile(c.attachment.publicId, c.attachment.resourceType)] : []
+      ),
+    ])
 
     return NextResponse.json({ success: true })
   } catch (err) {
