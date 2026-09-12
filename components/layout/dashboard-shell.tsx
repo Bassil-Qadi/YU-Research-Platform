@@ -7,7 +7,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppHeader />
-        <main className="mesh-bg relative flex-1 overflow-auto bg-muted/30">
+        <main className="mesh-bg relative flex-1 bg-muted/30">
           <div className="relative">{children}</div>
         </main>
       </div>
