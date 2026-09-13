@@ -27,9 +27,8 @@ function isApiRequest(pathname: string): boolean {
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
-  const isPublic =
-    publicPaths.includes(pathname) ||
-    pathname.startsWith("/api/auth");
+  // /api/auth never reaches this function: the matcher below excludes it.
+  const isPublic = publicPaths.includes(pathname);
 
   if (isPublic) {
     if (pathname === "/login" && req.auth) {
@@ -67,6 +66,11 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // /api/auth is excluded on purpose. Auth.js runs in its own route handlers
+    // there; running it here as well put two sets of auth cookies on every
+    // response: sign-out's "delete the session" beside this wrapper's refreshed
+    // session, so signing out left you signed in. It is also why /api/auth/csrf
+    // sent two different csrf-token cookies.
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
