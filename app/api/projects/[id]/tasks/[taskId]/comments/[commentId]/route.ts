@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { EVENTS, projectChannel } from '@/lib/realtime/channels'
+import { publish } from '@/lib/realtime/server'
 import mongoose from 'mongoose'
 import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
@@ -55,7 +57,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     const populated = await comment.populate('authorId', 'name avatarUrl')
 
-    global.io?.to(`project:${params.id}`).emit('task-comment:updated', {
+    await publish(projectChannel(params.id), EVENTS.commentUpdated, {
       taskId:  params.taskId,
       comment: populated,
     })
@@ -101,7 +103,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       await deleteFile(attachment.publicId, attachment.resourceType)
     }
 
-    global.io?.to(`project:${params.id}`).emit('task-comment:deleted', {
+    await publish(projectChannel(params.id), EVENTS.commentDeleted, {
       taskId:    params.taskId,
       commentId: params.commentId,
     })

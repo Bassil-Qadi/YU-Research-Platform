@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { EVENTS, projectChannel } from '@/lib/realtime/channels'
+import { publish } from '@/lib/realtime/server'
 import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
@@ -77,7 +79,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     // Emit via Socket.io
-    global.io?.to(`project:${params.id}`).emit('task-updated', task)
+    await publish(projectChannel(params.id), EVENTS.taskUpdated, task)
 
     // Announce a *new* assignee, not every save that happens to carry one.
     const newAssignee = parsed.data.assigneeId ?? null
@@ -141,7 +143,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
       )
     )
 
-    global.io?.to(`project:${params.id}`).emit('task-deleted', { taskId: params.taskId })
+    await publish(projectChannel(params.id), EVENTS.taskDeleted, { taskId: params.taskId })
 
     return NextResponse.json({ success: true })
   } catch (err) {

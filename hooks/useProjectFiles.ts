@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
-import { getSocket, joinProjectRoom } from '@/lib/socket-client'
+import { EVENTS } from '@/lib/realtime/channels'
+import { onRealtime, subscribeProject } from '@/lib/realtime/client'
 
 export interface ProjectFile {
   _id:          string
@@ -31,8 +32,7 @@ export function useProjectFiles(projectId: string, enabled: boolean) {
 
   useEffect(() => {
     if (!projectId || !enabled) return
-    const socket = getSocket()
-    const leaveRoom = joinProjectRoom(projectId)
+    const leaveChannel = subscribeProject(projectId)
 
     const onUploaded = (file: ProjectFile) => {
       if (file.projectId !== projectId) return
@@ -53,13 +53,14 @@ export function useProjectFiles(projectId: string, enabled: boolean) {
       )
     }
 
-    socket.on('file-uploaded', onUploaded)
-    socket.on('file-deleted', onDeleted)
+    const unbind = [
+      onRealtime(EVENTS.fileUploaded, onUploaded),
+      onRealtime(EVENTS.fileDeleted, onDeleted),
+    ]
 
     return () => {
-      leaveRoom()
-      socket.off('file-uploaded', onUploaded)
-      socket.off('file-deleted', onDeleted)
+      unbind.forEach((off) => off())
+      leaveChannel()
     }
   }, [projectId, enabled, queryClient])
 

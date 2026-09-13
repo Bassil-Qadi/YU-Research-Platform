@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { EVENTS, projectChannel } from '@/lib/realtime/channels'
+import { publish } from '@/lib/realtime/server'
 import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
 import Project from '@/lib/db/models/Project'
@@ -129,7 +131,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
 
     // Emit via Socket.io
-    global.io?.to(`project:${params.id}`).emit('task-created', populated)
+    await publish(projectChannel(params.id), EVENTS.taskCreated, populated)
 
     return NextResponse.json(populated, { status: 201 })
   } catch (err) {

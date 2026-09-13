@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
-import { getSocket, joinProjectRoom } from '@/lib/socket-client'
+import { EVENTS } from '@/lib/realtime/channels'
+import { onRealtime, subscribeProject } from '@/lib/realtime/client'
 
 export interface TaskCommentAttachment {
   name:         string
@@ -44,9 +45,8 @@ export function useTaskComments(projectId: string, taskId: string | null) {
 
   useEffect(() => {
     if (!taskId) return
-    const socket = getSocket()
-    // Comment events go to the project room; hold it while the thread is open.
-    const leaveRoom = joinProjectRoom(projectId)
+    // Comment events go to the project channel; hold it while the thread is open.
+    const leaveChannel = subscribeProject(projectId)
 
     const update = (fn: (comments: TaskCommentItem[]) => TaskCommentItem[]) =>
       queryClient.setQueryData(key(taskId), (old: ThreadData | undefined) =>
@@ -67,15 +67,15 @@ export function useTaskComments(projectId: string, taskId: string | null) {
       update((c) => c.filter((x) => x._id !== p.commentId))
     }
 
-    socket.on('task-comment:new', onNew)
-    socket.on('task-comment:updated', onUpdated)
-    socket.on('task-comment:deleted', onDeleted)
+    const unbind = [
+      onRealtime(EVENTS.commentNew, onNew),
+      onRealtime(EVENTS.commentUpdated, onUpdated),
+      onRealtime(EVENTS.commentDeleted, onDeleted),
+    ]
 
     return () => {
-      leaveRoom()
-      socket.off('task-comment:new', onNew)
-      socket.off('task-comment:updated', onUpdated)
-      socket.off('task-comment:deleted', onDeleted)
+      unbind.forEach((off) => off())
+      leaveChannel()
     }
   }, [projectId, taskId, queryClient])
 

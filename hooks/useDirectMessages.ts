@@ -2,7 +2,8 @@ import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { apiFetch } from '@/lib/api'
-import { getSocket } from '@/lib/socket-client'
+import { EVENTS, isPartial } from '@/lib/realtime/channels'
+import { onRealtime, subscribeUser } from '@/lib/realtime/client'
 
 export interface DirectParticipant {
   _id:         string
@@ -52,15 +53,17 @@ export function useDirectConversations() {
 
   useEffect(() => {
     if (!session?.user?.id) return
-    const socket = getSocket()
+    // DMs arrive on the user's personal channel, which has to be held to hear them.
+    const release = subscribeUser(session.user.id)
 
     const onNew = () => {
       queryClient.invalidateQueries({ queryKey: ['direct-conversations'] })
     }
 
-    socket.on('dm:new', onNew)
+    const unbind = onRealtime(EVENTS.dmNew, onNew)
     return () => {
-      socket.off('dm:new', onNew)
+      unbind()
+      release()
     }
   }, [session?.user?.id, queryClient])
 
@@ -69,6 +72,8 @@ export function useDirectConversations() {
 
 export function useDirectThread(conversationId: string | null) {
   const queryClient = useQueryClient()
+  const { data: session } = useSession()
+  const userId = session?.user?.id
 
   const query = useQuery<{ messages: DirectMessageItem[] }>({
     queryKey: ['direct-thread', conversationId],
@@ -85,11 +90,19 @@ export function useDirectThread(conversationId: string | null) {
   }, [conversationId, query.data, queryClient])
 
   useEffect(() => {
-    if (!conversationId) return
-    const socket = getSocket()
+    if (!conversationId || !userId) return
+    const release = subscribeUser(userId)
 
     const onNew = (payload: { conversationId: string; message: DirectMessageItem }) => {
       if (payload.conversationId !== conversationId) return
+
+      // Too large to publish whole: fetch the thread rather than append a stub.
+      if (isPartial(payload)) {
+        queryClient
+          .refetchQueries({ queryKey: ['direct-thread', conversationId] })
+          .then(() => queryClient.invalidateQueries({ queryKey: ['direct-conversations'] }))
+        return
+      }
 
       let wasNew = false
 
@@ -114,11 +127,12 @@ export function useDirectThread(conversationId: string | null) {
       }
     }
 
-    socket.on('dm:new', onNew)
+    const unbind = onRealtime(EVENTS.dmNew, onNew)
     return () => {
-      socket.off('dm:new', onNew)
+      unbind()
+      release()
     }
-  }, [conversationId, queryClient])
+  }, [conversationId, userId, queryClient])
 
   return query
 }

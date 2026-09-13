@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { EVENTS, projectChannel } from '@/lib/realtime/channels'
+import { publish } from '@/lib/realtime/server'
 import mongoose from 'mongoose'
 import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
@@ -49,7 +51,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     await ProjectFile.deleteOne({ _id: file._id })
     await deleteFile(file.publicId, file.resourceType)
 
-    global.io?.to(`project:${params.id}`).emit('file-deleted', { fileId: params.fileId })
+    await publish(projectChannel(params.id), EVENTS.fileDeleted, { fileId: params.fileId })
 
     return NextResponse.json({ success: true })
   } catch (err) {

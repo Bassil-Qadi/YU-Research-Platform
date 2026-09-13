@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { EVENTS, projectChannel } from '@/lib/realtime/channels'
+import { publish } from '@/lib/realtime/server'
 import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
 import TaskComment from '@/lib/db/models/TaskComment'
@@ -161,7 +163,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     })
     const populated = await comment.populate('authorId', 'name avatarUrl')
 
-    global.io?.to(`project:${params.id}`).emit('task-comment:new', {
+    await publish(projectChannel(params.id), EVENTS.commentNew, {
       taskId:  params.taskId,
       comment: populated,
     })

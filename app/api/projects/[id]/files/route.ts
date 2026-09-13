@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { EVENTS, projectChannel } from '@/lib/realtime/channels'
+import { publish } from '@/lib/realtime/server'
 import mongoose from 'mongoose'
 import { auth } from '@/auth'
 import { connectDB } from '@/lib/db/connect'
@@ -117,7 +119,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     const populated = await created.populate('uploadedBy', 'name avatarUrl')
 
-    global.io?.to(`project:${params.id}`).emit('file-uploaded', populated)
+    await publish(projectChannel(params.id), EVENTS.fileUploaded, populated)
 
     return NextResponse.json(populated, { status: 201 })
   } catch (err) {

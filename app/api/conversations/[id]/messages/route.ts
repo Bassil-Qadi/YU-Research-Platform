@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { EVENTS, userChannel } from '@/lib/realtime/channels'
+import { publish } from '@/lib/realtime/server'
 import mongoose from 'mongoose'
 import { z } from 'zod'
 import { auth } from '@/auth'
@@ -112,17 +114,15 @@ export async function POST(req: NextRequest, { params }: Params) {
       .find((id) => id !== session.user.id)
 
     if (recipientId) {
-      // Personal rooms are joined from the session, so this reaches the
-      // recipient wherever they are without a room per conversation.
-      const io = global.io
-      io?.to(`user:${recipientId}`).emit('dm:new', {
-        conversationId: params.id,
-        message:        populated,
-      })
-      io?.to(`user:${session.user.id}`).emit('dm:new', {
-        conversationId: params.id,
-        message:        populated,
-      })
+      // Personal channels are authorised per user, so this reaches the
+      // recipient wherever they are without a channel per conversation. The
+      // sender gets it too, for their other open tabs.
+      await publish(
+        [userChannel(recipientId), userChannel(session.user.id)],
+        EVENTS.dmNew,
+        { conversationId: params.id, message: populated },
+        { conversationId: params.id }
+      )
 
       await createNotifications({
         userIds: [recipientId],

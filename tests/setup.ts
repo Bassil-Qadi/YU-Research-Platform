@@ -16,5 +16,10 @@ delete process.env.CLOUDINARY_CLOUD_NAME
 delete process.env.CLOUDINARY_API_KEY
 delete process.env.CLOUDINARY_API_SECRET
 delete process.env.RESEND_API_KEY
+// Without these, publishing is a no-op and nothing tries to reach Pusher.
+delete process.env.PUSHER_APP_ID
+delete process.env.PUSHER_SECRET
+delete process.env.NEXT_PUBLIC_PUSHER_KEY
+delete process.env.NEXT_PUBLIC_PUSHER_CLUSTER
 // No Redis in tests: the rate limiter falls back to its in-process store.
 delete process.env.REDIS_URL

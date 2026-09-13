@@ -1,5 +1,7 @@
 import Notification, { type NotificationType } from '@/lib/db/models/Notification'
 import { Types } from 'mongoose'
+import { EVENTS, userChannel } from '@/lib/realtime/channels'
+import { publish } from '@/lib/realtime/server'
 
 interface CreateNotificationParams {
   userIds: (string | Types.ObjectId)[]
@@ -20,16 +22,17 @@ export async function createNotifications({
 
   const notifications = await Notification.insertMany(docs)
 
-  // Emit real-time notification to each user via Socket.io
-  const io = global.io
-  if (io) {
-    notifications.forEach((notification) => {
-      io.to(`user:${notification.userId.toString()}`).emit(
-        'new-notification',
+  // Each recipient hears about their own notification on their personal
+  // channel. A missed one still shows up on the bell's 30-second poll.
+  await Promise.all(
+    notifications.map((notification) =>
+      publish(
+        userChannel(notification.userId.toString()),
+        EVENTS.notificationNew,
         notification
       )
-    })
-  }
+    )
+  )
 
   return notifications
 }

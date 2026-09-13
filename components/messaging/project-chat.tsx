@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { Send, Loader2 } from 'lucide-react'
 import { useProjectMessages } from '@/hooks/useProjectMessages'
-import { getSocket } from '@/lib/socket-client'
+import { EVENTS } from '@/lib/realtime/channels'
+import { projectChannelHandle, subscribeProject } from '@/lib/realtime/client'
 import { apiFetch } from '@/lib/api'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,7 @@ export function ProjectChat({ projectId }: { projectId: string }) {
   const [typingUser, setTypingUser] = useState<string | null>(null)
   const bottomRef  = useRef<HTMLDivElement>(null)
   const typingTimer = useRef<ReturnType<typeof setTimeout>>()
+  const lastTypingSent = useRef(0)
 
   const messages = useMemo(() => data?.messages ?? [], [data?.messages])
 
@@ -27,28 +29,46 @@ export function ProjectChat({ projectId }: { projectId: string }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Typing indicator listeners
+  // Typing indicator: sent browser-to-browser as client events on the project
+  // channel. Bound on the channel, not globally, because only there does Pusher
+  // attach the sender's user id; the name comes from the presence member list,
+  // which the server filled from the session, not from anything the sender said.
   useEffect(() => {
-    const socket = getSocket()
-    socket.on('user-typing', ({ userName }: { userName: string }) => {
-      setTypingUser(userName)
-    })
-    socket.on('user-stop-typing', () => setTypingUser(null))
-    return () => {
-      socket.off('user-typing')
-      socket.off('user-stop-typing')
+    const release = subscribeProject(projectId)
+    const channel = projectChannelHandle(projectId)
+    if (!channel) return release
+
+    const onTyping = (_data: unknown, metadata?: { user_id?: string }) => {
+      const member = metadata?.user_id ? channel.members.get(metadata.user_id) : null
+      setTypingUser(member?.info?.name ?? 'Someone')
     }
-  }, [])
+    const onStopTyping = () => setTypingUser(null)
+
+    channel.bind(EVENTS.typing, onTyping)
+    channel.bind(EVENTS.stopTyping, onStopTyping)
+    return () => {
+      channel.unbind(EVENTS.typing, onTyping)
+      channel.unbind(EVENTS.stopTyping, onStopTyping)
+      release()
+    }
+  }, [projectId])
 
   function handleTyping() {
-    const socket = getSocket()
-    socket.emit('typing', {
-      projectId,
-      userName: session?.user?.name ?? 'Someone',
-    })
+    const channel = projectChannelHandle(projectId)
+    if (!channel?.subscribed) return
+
+    // Pusher allows 10 client events a second per connection, and this runs on
+    // every keystroke; once a second is plenty to keep the indicator alive.
+    const now = Date.now()
+    if (now - lastTypingSent.current > 1000) {
+      channel.trigger(EVENTS.typing, {})
+      lastTypingSent.current = now
+    }
+
     clearTimeout(typingTimer.current)
     typingTimer.current = setTimeout(() => {
-      socket.emit('stop-typing', { projectId })
+      channel.trigger(EVENTS.stopTyping, {})
+      lastTypingSent.current = 0
     }, 1500)
   }
 

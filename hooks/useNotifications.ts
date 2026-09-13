@@ -2,7 +2,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { apiFetch } from '@/lib/api'
-import { getSocket } from '@/lib/socket-client'
+import { EVENTS } from '@/lib/realtime/channels'
+import { onRealtime, subscribeUser } from '@/lib/realtime/client'
 
 export interface INotification {
   _id:       string
@@ -32,7 +33,8 @@ export function useNotifications() {
 
   useEffect(() => {
     if (!session?.user?.id) return
-    const socket = getSocket()
+    // Notifications arrive on the user's personal channel.
+    const release = subscribeUser(session.user.id)
 
     const onNewNotification = (notification: INotification) => {
       queryClient.setQueryData(
@@ -43,10 +45,11 @@ export function useNotifications() {
         })
       )
     }
-    socket.on('new-notification', onNewNotification)
+    const unbind = onRealtime(EVENTS.notificationNew, onNewNotification)
 
     return () => {
-      socket.off('new-notification', onNewNotification)
+      unbind()
+      release()
     }
   }, [session?.user?.id, queryClient])
 

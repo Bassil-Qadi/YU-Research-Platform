@@ -1,7 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
-import { getSocket, joinProjectRoom } from '@/lib/socket-client'
+import { EVENTS } from '@/lib/realtime/channels'
+import { onRealtime, subscribeProject } from '@/lib/realtime/client'
 
 export type TaskStatus   = 'todo' | 'in-progress' | 'in-review' | 'done'
 export type TaskPriority = 'low' | 'medium' | 'high'
@@ -40,14 +41,13 @@ export function useProjectTasks(projectId: string) {
 
   useEffect(() => {
     if (!projectId) return
-    const socket = getSocket()
-    // Task events are broadcast to the project room, so the board has to be in
-    // it. It used to rely on the chat having joined, which stopped happening as
-    // soon as the two moved into separate tabs.
-    const leaveRoom = joinProjectRoom(projectId)
+    // Task events are published to the project channel, so the board has to
+    // hold it. It used to rely on the chat having joined, which stopped
+    // happening as soon as the two moved into separate tabs.
+    const leaveChannel = subscribeProject(projectId)
 
     const onTaskCreated = (task: ITask) => {
-      // The socket can be in several project rooms at once.
+      // This browser can hold several project channels at once.
       if (task.projectId !== projectId) return
 
       queryClient.setQueryData(
@@ -97,21 +97,18 @@ export function useProjectTasks(projectId: string) {
     const onCommentAdded   = ({ taskId }: { taskId: string }) => bumpComments(taskId, 1)
     const onCommentRemoved = ({ taskId }: { taskId: string }) => bumpComments(taskId, -1)
 
-    socket.on('task-created', onTaskCreated)
-    socket.on('task-updated', onTaskUpdated)
-    socket.on('task-deleted', onTaskDeleted)
-    socket.on('task-comment:new', onCommentAdded)
-    socket.on('task-comment:deleted', onCommentRemoved)
+    // Each unbinds only its own listener, not the ones other hooks hold.
+    const unbind = [
+      onRealtime(EVENTS.taskCreated, onTaskCreated),
+      onRealtime(EVENTS.taskUpdated, onTaskUpdated),
+      onRealtime(EVENTS.taskDeleted, onTaskDeleted),
+      onRealtime(EVENTS.commentNew, onCommentAdded),
+      onRealtime(EVENTS.commentDeleted, onCommentRemoved),
+    ]
 
     return () => {
-      leaveRoom()
-      // Detach only these listeners — off(event) would also drop the ones
-      // other hooks registered on the shared socket.
-      socket.off('task-created', onTaskCreated)
-      socket.off('task-updated', onTaskUpdated)
-      socket.off('task-deleted', onTaskDeleted)
-      socket.off('task-comment:new', onCommentAdded)
-      socket.off('task-comment:deleted', onCommentRemoved)
+      unbind.forEach((off) => off())
+      leaveChannel()
     }
   }, [projectId, queryClient])
 

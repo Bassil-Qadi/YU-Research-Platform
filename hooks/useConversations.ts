@@ -1,7 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
-import { getSocket } from '@/lib/socket-client'
+import { EVENTS, isPartial } from '@/lib/realtime/channels'
+import { onRealtime } from '@/lib/realtime/client'
 
 export interface Conversation {
   id:         string
@@ -25,9 +26,7 @@ export function useConversations() {
   })
 
   useEffect(() => {
-    const socket = getSocket()
-
-    // When a new message arrives in any project,
+    // When a new message arrives in any project channel this browser holds,
     // update that conversation's last message in the list
     const onNewMessage = (message: {
       projectId:  string
@@ -35,6 +34,12 @@ export function useConversations() {
       createdAt:  string
       senderId?:  { name?: string }
     }) => {
+      // Too large to publish whole: refetch the list rather than guess.
+      if (isPartial(message)) {
+        queryClient.invalidateQueries({ queryKey: ['conversations'] })
+        return
+      }
+
       queryClient.setQueryData(
         ['conversations'],
         (old: { conversations: Conversation[] } | undefined) => {
@@ -57,13 +62,8 @@ export function useConversations() {
         }
       )
     }
-    socket.on('new-message', onNewMessage)
-
-    return () => {
-      // Detach only this listener — off('new-message') would also drop the one
-      // the open project chat registered on the shared socket.
-      socket.off('new-message', onNewMessage)
-    }
+    // Unbinds only this listener, not the ones other hooks hold for the event.
+    return onRealtime(EVENTS.messageNew, onNewMessage)
   }, [queryClient])
 
   return query
